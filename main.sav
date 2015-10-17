@@ -1,0 +1,594 @@
+"use strict";
+
+window.jQuery = require('jquery');
+var $ = jQuery;
+
+require('./css/bootstrap-flatly.css');
+require('bootstrap');
+
+
+let oxiDate = require('./oxidate.js');
+let utils = require('./utils.js');
+let grph = require('graphics');
+
+var React = require('react');
+
+var ReactBootStrap = require('react-bootstrap');
+const { Button, Input } = ReactBootStrap;
+
+var NavItem = ReactBootStrap.NavItem;
+var Nav = ReactBootStrap.Nav;
+
+var Utils = require('utils');
+
+var Router = require('react-router'); 
+
+var {DefaultRoute, Link, RouteHandler, Route, State, Navigation, Redirect} = Router;
+
+var About = require('PseudoqAbout.jsx');
+var PseudoqHelp = require('PseudoqHelp.jsx');
+var Board = require('PseudoqBoard.jsx');
+
+import thunkMiddleware from 'redux-thunk';
+import createLogger from 'redux-logger';
+import { createStore, applyMiddleware } from 'redux';
+
+import { Provider, connect } from 'react-redux';
+
+import {Hidato, hidatoReducer} from 'Hidato.jsx';
+
+var today = new Date();
+var contents = {date: oxiDate.toFormatUTC(today, 'YYYYMMDD'), boards: {} };
+var contentsLoaded = false;
+var initDays = function(dtin) {
+    let dt = dtin;
+    var o = Object.create(null);
+    firstDay = oxiDate.toFormat(dt, 'DDDD');
+
+    var i = 7;
+    while (i > 0) {
+        let cdt = oxiDate.toFormat(dt, 'yyyyMMdd');
+        let dy = oxiDate.toFormat(dt, "DDDD");
+        o[dy] = {date: cdt, boards: [] };
+        dt = oxiDate.addDays(dt, -1);
+        i = i - 1;
+    }
+    dt = oxiDate.addDays(dtin, 1);
+    o['tomorrow'] = {date: oxiDate.toFormat(dt, 'yyyyMMdd'), boards: []}; 
+    o['tutorial'] = null;
+    return o;
+};
+var days = initDays(today);
+
+var items = [];
+var firstDay = oxiDate.toFormatUTC(today, 'DDDD');
+
+var findPuzzle = function ( dayName, pos ) {
+    return days[dayName].boards[pos];
+};
+
+var loadContents = function(callback) {
+
+    var initContents = function ( o ) {
+        //console.log('parse succeeded');
+        let brds = o.boards;
+        let dt = today
+        let tom = oxiDate.toFormat(oxiDate.addDays(dt,1), 'yyyyMMdd');
+        days = initDays(dt);
+        firstDay = oxiDate.toFormat(dt, 'DDDD');
+
+        var i = 7;
+        while (i > 0) {
+            let cdt = oxiDate.toFormat(dt, 'yyyyMMdd');
+            //console.log('cdt :'+cdt);
+            let dy = oxiDate.toFormat(dt, "DDDD");
+            let boards = brds[cdt] || [];
+            console.log('cdt :'+cdt+", day : "+dy+", boards : "+Object.keys(boards).length);
+            days[dy].boards = boards;
+            dt = oxiDate.addDays(dt, -1);
+            i = i - 1;
+        }
+
+        let cdt = oxiDate.toFormat(dt, 'yyyyMMdd');
+        let fnd = false;
+        Object.keys(brds).forEach(function (k) {
+            if (k < cdt) {
+                fnd = true;
+                delete brd.k
+            }
+        });  
+        days['tomorrow'] = {date: tom, boards: brds[tom] };
+        days['tutorial'] = brds['tutorial'];
+        //console.log(JSON.stringify(days['tutorial']));
+        contents = o;
+        contentsLoaded = true;
+        if (callback) callback(contents);
+
+    };
+
+    let stg = localStorage.getItem('pseudoq.boards');
+    let o = null;
+
+    if (stg) {
+        try {
+            o = JSON.parse(stg);
+            initContents(o);
+        }
+        catch (e) {
+            console.log("error parsing local storage : "+e);
+            localStorage.removeItem('pseudoq.boards');
+        }
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", '/puzzles');
+    xhr.onload = () => {
+        localStorage.setItem('pseudoq.userName', xhr.getResponseHeader('X-psq-moniker'));
+        let prov = xhr.getResponseHeader('X-psq-authprov')
+        if (prov)  localStorage.setItem('pseudoq.authprov', prov);
+        else localStorage.removeItem('pseudoq.authprov');
+
+        if (xhr.status == 200) {
+            try { 
+                let t = JSON.parse(xhr.responseText);
+                localStorage.setItem('pseudoq.boards', xhr.responseText);
+                initContents( t );
+            } catch (e) {
+                console.log("error (parsing response?) : "+e);
+            }
+        }
+    };
+    xhr.send();
+};
+
+var App = React.createClass({displayName: 'App',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    componentDidMount: function() {
+        loadContents( () => { this.forceUpdate(); });
+    },
+
+    handleDoubleClick: function(e) {
+        e.preventDefault;
+    },
+
+    render: function () {
+        console.log('rendering app')
+        let userName = localStorage.getItem('pseudoq.userName');
+        let prov = localStorage.getItem('pseudoq.authprov')
+        let lis = prov ? (<Link to='logout'>Sign Out ({prov})</Link>)
+                       : (<Link to='login'>Sign In</Link>) ;
+        return (
+            <div onDoubleClick={this.handleDoubleClick} >
+              <div className="navbar navbar-default" width='100%'>
+                <div className="navbar-header">
+                  <Link className="navbar-brand" to="app">PseudoQ</Link>
+                </div>
+                <div className="navbar-collapse collapse navbar-responsive-collapse">
+                  <ul className="nav navbar-nav navbar-right">
+                      <li><Link to="help">How to Play</Link></li>
+                      <li><Link to="about">About</Link></li>
+                      <li><a href="mailto:stephensong2@gmail.com">Contact Us</a></li>
+                      <li>{ lis }</li>
+                      <li><Link to='changeMoniker' >User : { userName } </Link></li>
+                  </ul>
+                </div>
+              </div>
+              <RouteHandler/>
+            </div>
+        );
+/*
+      <NavBar>
+        <Nav>
+          <NavItem><Link to="app">PseudoQ</Link></NavItem>
+          <NavItem><Link to="about">About</Link></NavItem>
+          <NavItem href="mailto:stephensong2@gmail.com">Contact Us</NavItem>
+          <RouteHandler/>
+        </Nav>
+      </NavBar>
+*/
+    }
+});
+
+var Login = React.createClass({displayName: 'Login',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    render: function () {
+        return (
+      <ul>
+        <li><a href="/auth/facebook">Sign in via Facebook</a></li>
+        <li><a href="/auth/twitter">Sign in via Twitter</a></li> 
+      </ul>        
+      );
+        //<li><a href="/auth/google">Sign in via Google</a></li>
+    }
+});
+
+var Logout = React.createClass({displayName: 'Logout',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    componentDidMount: function() {
+        var xhr = new XMLHttpRequest();
+        console.log("logout requested");
+        xhr.open("GET", '/logout');
+        xhr.onload = () => {
+            localStorage.removeItem('pseudoq.authprov');
+            this.context.router.goBack();
+        };
+        xhr.send();
+    },
+
+    render: function () { return null; },
+});
+
+
+var Challenge5min = React.createClass({displayName: 'Challenge5min',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    getInitialState: function() {
+        return {
+            brdJson: null
+        }
+    },
+
+    componentDidMount: function() {
+        var xhr = new XMLHttpRequest();
+        console.log("challenge5min puzzle requested");
+        xhr.open("GET", '/challenge5min');
+        xhr.onload = () => {
+            let json = JSON.parse(xhr.responseText);
+            json = grph.Transformer(json).randomTransform();
+            this.setState({brdJson: json});
+        };
+        xhr.send();
+    },
+
+    render: function () { 
+        const brdJson = this.state.brdJson;
+
+        return brdJson ? (<Board key={ 'challenge5:play' } dayName={ 'challenge5' } pos={brdJson.puzzleId}  brdJson={ brdJson } initmode={ 'play' } random={ true } timeOut={ 300 } /> )
+                       : null;
+    },
+
+});
+
+var Challenge15min = React.createClass({displayName: 'Challenge15min',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    getInitialState: function() {
+        return {
+            brdJson: null
+        }
+    },
+
+    componentDidMount: function() {
+        var xhr = new XMLHttpRequest();
+        console.log("challenge15min puzzle requested");
+        xhr.open("GET", '/challenge15min');
+        xhr.onload = () => {
+            let json = JSON.parse(xhr.responseText);
+            json = grph.Transformer(json).randomTransform();
+            this.setState({brdJson: json});
+        };
+        xhr.send();
+    },
+
+    render: function () { 
+        const brdJson = this.state.brdJson;
+
+        return brdJson ? (<Board key={ 'challenge15:play' } dayName={ 'challenge15' } pos={brdJson.puzzleId}  brdJson={ brdJson } initmode={ 'play' } random={ true } timeOut={ 900 } /> )
+                       : null;
+    },
+
+});
+
+
+var _hidatoApp = React.createClass({displayName: 'HidatoApp',
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    componentDidMount: function() {
+        var xhr = new XMLHttpRequest();
+        console.log("hidato puzzle requested");
+        xhr.open("GET", '/hidato');
+        xhr.onload = () => {
+            let json = JSON.parse(xhr.responseText);
+            console.log("puzzle received : "+json.pubID);
+            this.props.dispatch({type: 'loadBoard', json: json})
+        }
+        xhr.send();
+    },
+
+    render: function () { 
+        //console.log("rendering HidatoLink");
+        const {board,dispatch,insertVal,direction,moves} = this.props; 
+
+        return board ? (<Hidato key={ 'hidato:play' } board={ board } dispatch={dispatch} insertVal={insertVal} direction={direction} moves={moves} /> )
+                       : null;
+    },
+})
+
+let HidatoApp = connect(state => {
+        //console.log("connect called :" + (state && state.hidato ? state.hidato.toString() : "no state") );
+        return (state ? state.hidato : null); 
+    } )(_hidatoApp);
+
+var FP = React.createClass({displayName: 'FP',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    componentWillMount: function() {
+        var dt = oxiDate.parse(contents.date,'yyyyMMdd') ;
+        firstDay = oxiDate.toFormat(dt, 'DDDD');
+        var { dayName } = this.context.router.getCurrentParams();
+
+        items = [];
+        var i = 7;
+        while (i > 0) {
+            let cdt = oxiDate.toFormat(dt, 'yyyyMMdd');
+            let dy = oxiDate.toFormat(dt, "DDDD");
+            let prms = { dayName: dy };
+            let href = this.context.router.makeHref("daily",prms);
+            items.push( <NavItem key={ dy } eventKey={ dy } href={ href } >{ dy }</NavItem> );
+            dt = oxiDate.addDays(dt, -1);
+            i = i - 1;
+        }
+
+        let ch5 = 'challenge5';
+        let href5 = this.context.router.makeHref(ch5);
+        items.push( <NavItem key={ ch5 } eventKey={ ch5 } href={ href5 } >5 minute Challenge</NavItem> );
+
+        let ch15 = 'challenge15';
+        let href15 = this.context.router.makeHref( ch15 );
+        items.push( <NavItem key={ ch15 } eventKey={ ch15 } href={ href15 } >15 minute Challenge</NavItem> );
+
+        let hid = 'hidato';
+        let hrefhid = this.context.router.makeHref( hid );
+        items.push( <NavItem key={ hid } eventKey={ hid } href={ hrefhid } >Hidato</NavItem> );
+
+        if (!dayName) {
+            this.context.router.transitionTo('daily', {dayName: firstDay});
+        }
+    },
+
+    render: function() {
+
+        var { dayName } = this.context.router.getCurrentParams();
+        if (!dayName) {
+            return null;
+
+        }
+        let userName = localStorage.getItem('pseudoq.userName');
+        //console.log("rendering FP for day : " + dayName);
+
+        return ( 
+              <div>
+                <div className="row">
+                  <div className="col-md-12">
+                      <p>Welcome to PseudoQ.net.  Here we publish puzzles (mainly murderous Sudoku variants) that are playable online.
+                      </p>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-md-2">
+                      <Nav bsStyle='pills' stacked activeKey={ dayName } >
+                           {items}
+                      </Nav>
+                  </div>
+                  <div className="col-md-10">
+                    <RouteHandler/>
+                  </div>
+                </div>
+              </div>
+        );
+
+    }
+
+});
+
+var Help = React.createClass({displayName: 'Help',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    render: function() {
+        return (<PseudoqHelp board={ days['tutorial']} />);
+    }
+});
+
+
+var Daily = React.createClass({displayName: 'Daily',
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    render: function() {
+        let { dayName } = this.context.router.getCurrentParams();
+        let brds = [];
+        let cdt = '';
+        let dt = new Date();
+        let rslt = [];
+        if (dayName) {
+            let o = days[dayName];
+            dt = oxiDate.parse(o.date, 'yyyyMMdd');
+            cdt = oxiDate.toFormat(dt, "DDDD, MMMM D");
+            brds = o.boards;
+        } else {
+            cdt = oxiDate.toFormatUTC(dt, "DDDD, MMMM D");
+            dayName = oxiDate.toFormatUTC(dt, "DDDD");
+        }
+        var pos = 0;
+        for (var j in brds) {
+            if (brds.hasOwnProperty(j)) {
+                let js = brds[j];
+                let pzl = dayName + "/" + pos;
+                if (js.gameType === 'Hidato') {
+                    rslt.push( <Hidato key={ pzl+':view' } dayName={ dayName } pos={ pos } brdJson={ js } initmode='view'  /> );
+                }
+                else {
+                    rslt.push( <Board key={ pzl+':view' } dayName={ dayName } pos={ pos } brdJson={ js } initmode='view'  /> );
+                }
+                pos++;
+            }
+        }
+        return ( 
+          <div>
+            <h2>Puzzles for  { cdt } </h2>
+            <div>{ rslt }</div>
+          </div>
+        );
+
+    }    
+});
+
+var PlayPage = React.createClass({
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    render: function() {
+        const { dayName, pos } = this.context.router.getCurrentParams();
+        const brdJson = findPuzzle(dayName,pos);
+        const puzzle = dayName + "/" + pos;
+
+        return brdJson ? (<Board key={ puzzle+':play' } dayName={ dayName } pos={ pos}  brdJson={ brdJson } initmode={ 'play' }/> )
+                       : null;
+    }
+});
+
+var ChangeMoniker = React.createClass({
+
+    contextTypes: {
+        router: React.PropTypes.func.isRequired
+    },
+
+    getInitialState: function() {
+        return {
+            response: {ok: true},
+            moniker: localStorage.getItem('pseudoq.userName')
+        };
+    },
+
+    changeMoniker: function() {
+        this.setState({moniker: this.refs.moniker.getValue()});
+    },
+
+    saveMoniker: function() {
+        let newName = this.state.moniker;
+        console.log("saving moniker : "+newName);
+
+        let xhr = new XMLHttpRequest();   
+        xhr.open("POST", "/newMoniker");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+        xhr.onload = () => {
+            let rsptxt = xhr.responseText;
+            console.log("response received : "+rsptxt);           
+            if(xhr.status !== 200) { 
+                let msg = 'failed : ' + xhr.status + " - " + rsptxt;
+                alert(msg);
+            } else {
+                let rsp = JSON.parse(rsptxt);
+                if (rsp.ok) {
+                    localStorage.setItem('pseudoq.userName', newName);
+                    this.context.router.goBack();
+                }
+                else this.setState({response: rsp}); 
+            }
+        };
+        xhr.send(JSON.stringify({userName: newName}));
+
+    },
+
+    render: function() {
+        let xtra = this.state.response.ok ? <div/> : ( <div className="row">The moniker you requested is already taken.  You may wish to try another.</div> );
+        return (
+            <div>
+              <div className="row">
+                 <p>Enter new moniker, then press Save</p> 
+              </div>
+              <div className="row">
+                <div className="col-md-4">
+                  <Input type="textarea" ref="moniker" value={ this.state.moniker } onChange={this.changeMoniker} />   
+                </div>
+                <Button onClick={this.saveMoniker} >Save</Button>
+              </div>
+              { xtra }
+            </div>               
+        )
+    }
+});
+
+var routes = (
+  <Route name="app" path="/" handler={App}>
+    <Route name="help" path="/help" handler={Help}/>
+    <Route name="about" path="/about" handler={About}/>
+    <Route name="login" path="/login" handler={Login} />
+    <Route name="logout" path="/logout" handler={Logout} />
+    <Route name="changeMoniker" path="/changeMoniker" handler={ChangeMoniker}/>
+    <Route name="challenge5" path="/challenge5" handler={Challenge5min} />
+    <Route name="challenge15" path="/challenge15" handler={Challenge15min} />
+    <Route name="hidato" path="/hidato" handler={HidatoApp} />
+    <Route name="frontpage" path="/" handler={FP}>
+      <Redirect from="/_=_" to="frontpage" />
+      <Route name="daily" path="/:dayName" handler={Daily}/>
+    </Route>
+    <Route name="play" path="/:dayName/:pos" handler={PlayPage}/>
+  </Route>
+);
+
+function reducer(state, action) {
+    return {
+        hidato: hidatoReducer(state ? state.hidato : null, action),
+        //pseudoq: pseudoqReducer(state.pseudoq, action),
+    };
+}
+
+const loggerMiddleware = createLogger();
+
+const createStoreWithMiddleware = applyMiddleware(
+  thunkMiddleware // lets us dispatch() functions
+  //,loggerMiddleware // neat middleware that logs actions
+)(createStore);
+
+const store = createStoreWithMiddleware(reducer);
+
+var main = function() {
+    //document.addEventListener('DOMContentLoaded', function() {
+    $(function() {
+        Router.run(routes, (Handler, routerState) => {
+            React.render(
+                <Provider store={store}>
+                    {() => <Handler routerState={routerState} /> }
+                </Provider> , 
+                document.getElementById("page-body")
+            );
+        });
+
+    });
+};
+
+module.exports = main;
+
+
