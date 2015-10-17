@@ -156,6 +156,7 @@ export let App = React.createClass({displayName: 'App',
                       <li><Link to="/help">How to Play</Link></li>
                       <li><Link to="/about">About</Link></li>
                       <li><Link to="/blog">Blog</Link></li>
+                      <li><Link to="/links">Links</Link></li>
                       <li><a href="mailto:stephensong2@gmail.com">Contact Us</a></li>
                       <li>{ lis }</li>
                       <li><Link to='/changeMoniker' >User : { userName } </Link></li>

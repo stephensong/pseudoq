@@ -35,7 +35,10 @@ export function blankLink() {
 }
 
 const LOAD = 'link/LOAD';
+<<<<<<< HEAD
 const SELECT = 'link/SELECT';
+=======
+>>>>>>> 350f4b7b818b83ea468b86a5fa3a34843d596dd2
 const UPDATE = 'link/UPDATE';
 const STARTEDIT = 'link/STARTEDIT';
 const STOPEDIT = 'link/STOPEDIT';
@@ -44,9 +47,7 @@ const EXPAND = 'link/EXPAND';
 const UNEXPAND = 'link/UNEXPAND';
 
 let initState = {
-    links: [],
-    currentLink: null,
-    editing: false
+    links: []
 }
 
 export function linksReducer(state = initState, action) {
@@ -55,26 +56,31 @@ export function linksReducer(state = initState, action) {
 
         case LOAD:
             if (action.links.length === 0) return state;
-            let rslt = {... state, currentLink: action.links[0], links: action.links};
+            let rslt = {... state, links: action.links};
             return rslt;
 
-        case SELECT:
-            return {...state, currentLink: action.link};
-
         case EDITNEW:
-            return {...state, currentLink: {...blankLink(), editing: true} };
+            let nl = blankLink();
+            nl.editing = true;
+            news = state.links.slice(0)
+            news.unshift(nl);
+            return {...state, links: news };
 
         case EXPAND:
-            return {...state, currentLink: {...state.currentLink, expanded: true} };
+            news = state.links.map(l => l === action.link ? {...l, expanded: true} : l)
+            return {...state, links: news };
 
         case UNEXPAND:
-            return {...state, currentLink: {...state.currentLink, expanded: false} };
+            news = state.links.map(l => l === action.link ? {...l, expanded: false} : l)
+            return {...state, links: news };
 
         case STARTEDIT:
-            return {...state, currentLink: {...currentLink, editing: true} };
+            news = state.links.map(l => l === action.link ? {...l, editing: true} : l)
+            return {...state, links: news };
 
         case STOPEDIT:
-            return {...state, currentLink: {...currentLink, editing: false} };
+            news = state.links.map(l => l === action.link ? {...l, editing: false} : l)
+            return {...state, links: news };
 
         case UPDATE:
             let links = state.links
@@ -96,7 +102,9 @@ let LinkEntry = React.createClass({
         let notes = this.refs.notes.getValue();
         let xhr = new XMLHttpRequest();   
         let link = {...this.props.link, url, notes, tags};
-        xhr.open("link", "/link");
+        delete link.editing;
+        delete link.expanded;
+        xhr.open("POST", "/link");
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = () => { 
             let rslt = JSON.parse(xhr.responseText);        
@@ -109,19 +117,18 @@ let LinkEntry = React.createClass({
         xhr.send(JSON.stringify(link));
     },
 
-    startEdit() { this.props.dispatch({type: STARTEDIT}) },
-    stopEdit() { this.props.dispatch({type: STOPEDIT}) },
-    editNew() { this.props.dispatch({type: EDITNEW}) },
+    startEdit() { this.props.dispatch({type: STARTEDIT, link: this.props.link}) },
+    stopEdit() { this.props.dispatch({type: STOPEDIT, link: this.props.link}) },
 
     render() {
-        let link = this.props.link; 
+        let {link, dispatch} = this.props; 
         if (!link) return null;
         let tags = link.tags.join(' ');
     	if (link.editing) {
             return (
                 <Flex row >
                   <Flex column style={{flex: '1 1 auto',  marginRight: 20 }}>
-                        <Input type="text" style={{height: 40, width: '100%'}} ref="url" label='Title' defaultValue={ link.url }  />                  
+                        <Input type="text" style={{height: 40, width: '100%'}} ref="url" label='Url' defaultValue={ link.url }  />                  
                         <Input type="textarea" style={{width: '100%', height: 400}} ref="notes" label='Notes' defaultValue={ link.notes } />
                         <Input type="text" style={{height: 40, width: '100%'}} ref="tags" label='Tags' defaultValue={ tags } />
                   </Flex>
@@ -141,24 +148,25 @@ let LinkEntry = React.createClass({
 	            if (process.env.NODE_ENV !== 'production' || userName === 'gary2') {
 	                edits = ( <Flex row style={{justifyContent: 'flex-start', alignItems: 'stretch', height: 30}}>
 	                           <Button key='edit' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.startEdit} block >Edit</Button> 
-	                           <Button key='new' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.editNew} block >New</Button> 
 	                        </Flex> );
                 }
-            	h = ( <Flex row>
-            	       <div dangerouslySetInnerHTML={{__html: md.render(link.notes)}} /> 
-	                   <Flex row style={{justifyContent: 'space-between' }}>
+            	h = (<Flex row>
+                      <Flex column style={{width: '100%'}} >
+            	       <Flex row style={{width: '100%'}} dangerouslySetInnerHTML={{__html: md.render(link.notes)}} /> 
+	                   <Flex row style={{width: '100%', justifyContent: 'space-between' }}>
 	                      <div>Id: {link.id}</div>
 	                      <div>Published: {pub}</div>
 	                      <div>Last Edit: {lstedit}</div>
 	                   </Flex>
 	                   { edits }
+                      </Flex>
 	                 </Flex> 
 	                );
 	        }
 
             return (
               <div>
-                <Flex row key={ link.id } onClick={ () => dispatch({type: SELECT, link}) }>
+                <Flex row key={ link.id } >
                     <Flex col style={{flex: '5 1 auto'}}><a >{ link.url.trim() }</a></Flex>
                     <Flex col style={{flex: '1 0 auto'}}>{ expBtn }</Flex> 
                 </Flex>
@@ -181,9 +189,11 @@ let _links = React.createClass({
         xhr.send();
     },
 
+    editNew() { console.log("edit new"); this.props.dispatch({type: EDITNEW}); },
+
     render() {
         let {links, dispatch} = this.props;
-        if (links.length === 0) return null;
+        //if (links.length === 0) return null;
         let entries = links.map( link => {
         	return <LinkEntry key={link.id} dispatch={ dispatch } link={ link } />
         });
@@ -194,6 +204,7 @@ let _links = React.createClass({
                 <p/>
                 {entries}
                 <p/>
+                <Button key='new' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.editNew} block >New</Button> 
             </div>
             );
     }

@@ -45,7 +45,7 @@ const {
     Challenge15min
 } = main;
 
-let { blogReducer, Blog, BlogPost} = require('./blog.jsx');
+let { blogReducer, Blog, BlogPost, BlogEntry} = require('./blog.jsx');
 let { linksReducer, Links} = require('./links.jsx');
 let { hidatoReducer} = require('Hidato.jsx');
 
