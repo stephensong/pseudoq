@@ -145,6 +145,10 @@ export let App = React.createClass({displayName: 'App',
         let prov = localStorage.getItem('pseudoq.authprov')
         let lis = prov ? (<Link to='/logout'>Sign Out ({prov})</Link>)
                        : (<Link to='/login'>Sign In</Link>) ;
+
+        // how should this really be done??
+        let lis2 = (userName === 'gary2' ) ? [ <li key='blog' ><Link to="/blog">Blog</Link></li>, <li key='links' ><Link to="/links">Links</Link></li> ]
+                                           : [];
         return (
             <div onDoubleClick={this.handleDoubleClick} >
               <div className="navbar navbar-default" width='100%'>
@@ -155,8 +159,7 @@ export let App = React.createClass({displayName: 'App',
                   <ul className="nav navbar-nav navbar-right">
                       <li><Link to="/help">How to Play</Link></li>
                       <li><Link to="/about">About</Link></li>
-                      <li><Link to="/blog">Blog</Link></li>
-                      <li><Link to="/links">Links</Link></li>
+                      { lis2 }
                       <li><a href="mailto:stephensong2@gmail.com">Contact Us</a></li>
                       <li>{ lis }</li>
                       <li><Link to='/changeMoniker' >User : { userName } </Link></li>

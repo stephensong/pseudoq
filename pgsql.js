@@ -45,36 +45,91 @@ export const users = Object.create(null);
 userRows.forEach(function(r) { users[r.userId] = r; });
 users.count = userRows.length;
 
-export function insert_user(id, userName) {
-    //console.log('Inserting user : ' + userName ) ;
-    return new Promise( function(resolve,reject) {
-        let dt = new Date();
-        let usr = {userId: id, userName: userName, created: dt, updated: dt };
-        db.users.insert( usr, function(err, rslt) {
-            if (!err) {
-                users[id] = usr;
-                users.count = users.count + 1;
-                resolve(rslt);
-            } else reject(err);
-        });
-    });
-};
-
 let authRows = querySync("select * from auths").rows;
 export const auths = Object.create(null);
 authRows.forEach(function(r) { auths[r.authId] = r.userId; });
 
-export function insert_auth(prov, authId, userId) {
+export function query(cmd,prms) {
     return new Promise( function(resolve,reject) {
-        //console.log('Inserting auth for prov : ' + prov + ', user : ' + users[userId].userName  ) ;
-        let key = prov + ':' + authId;
-        let auth = {authId: key, userId: userId};
-        db.auths.insert(auth, function(err, rslt) {
-            if (!err) {
-                auths[key] = userId;
-                resolve(rslt);
-            } else reject(err);
+        db.query(cmd,prms, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
         });
+    });
+};
+
+export function where(tbl,cqry,prms) {
+    return new Promise( function(resolve,reject) {
+        tbl.where(cqry, prms, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
+        });
+    });
+};
+
+export function find(tbl, o) {
+    return new Promise( function(resolve,reject) {
+        tbl.find(o, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
+        });
+    });
+};
+
+export function findOne(tbl, o) {
+    return new Promise( function(resolve,reject) {
+        tbl.findOne(o, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
+        });
+    });
+};
+
+export function insert(tbl,o) {
+    return new Promise( function(resolve,reject) {
+        tbl.insert(o, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
+        });
+    });
+};
+
+export function update(tbl,o) {
+    return new Promise( function(resolve,reject) {
+        tbl.update(o, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
+        });
+    });
+};
+
+export function save(tbl,o) {
+    return new Promise( function(resolve,reject) {
+        tbl.save(o, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
+        });
+    });
+};
+
+export function insert_user(id, userName) {
+    //console.log('Inserting user : ' + userName ) ;
+    let dt = new Date();
+    let usr = {userId: id, userName: userName, created: dt, updated: dt };
+    return insert(db.users, usr).then(rslt => {
+        users[id] = usr;
+        users.count = users.count + 1;
+        return rslt;
+    });
+};
+
+export function insert_auth(prov, authId, userId) {
+    //console.log('Inserting auth for prov : ' + prov + ', user : ' + users[userId].userName  ) ;
+    let key = prov + ':' + authId;
+    let auth = {authId: key, userId: userId};
+    return insert(db.auths, auth).then( rslt => {
+        auths[key] = userId;
+        return rslt;
     });
 };
 
@@ -89,42 +144,31 @@ export function set_user_name(userId, newName, next) {
     if (!usr) return insert_user(id,newName,next);
     if (usr.userName === newName) return;
     let dt = new Date();
-    db.query('update users set "userName" = $2, updated = $3 where "userId" = $1',[userId,newName,dt], function (err,rslt) {
-        if (!err) {
-            usr.userName = newName;
-            usr.updated = dt;
-        }
-        if (next) next(err,usr);
-        else if (err) throw err;
-        else return usr;
+    return query('update users set "userName" = $2, updated = $3 where "userId" = $1',[userId,newName,dt]).then(rslt => {
+        usr.userName = newName;
+        usr.updated = dt;
+        return usr;
     });
 };
 
-export function insert_solution(soln, next) {
-    console.log("inserting solution for : " + soln.puzzle);
-    db.solutions.insert( soln, next) ;
-};
-
-export function upsert_solution(soln, next) {
+export function upsert_solution(soln) {
     console.log('solution submitted, puzzle : '+soln.puzzle+", user : "+soln.user);
-    db.solutions.where('puzzle=$1 and "user"=$2',[soln.puzzle,soln.user],function(err,rslt) {
+    return where(db.solutions, 'puzzle=$1 and "user"=$2',[soln.puzzle,soln.user]).then( rslt => {
         //console.log("solutions found : "+rslt.length);
-        if (err) throw err;
         if (rslt.length > 0) {
             soln.solnId = rslt[0].solnId;
-            db.solutions.save(soln, next);
+            return update(db.solutions, soln);
         } else {
-            insert_solution(soln,next);
+            return insert(db.solutions, soln);
         }
     });
 };
 
-export function upsert_challenge(chrslt, next) {
+export function upsert_challenge(chrslt) {
     console.log('challenge submitted, timeOut : '+chrslt.timeOut+", user : "+chrslt.user);
     if (chrslt.percentCompleted) delete chrslt.percentCompleted;
-    db.challenges.where('"timeOut"=$1 and "user"=$2',[chrslt.timeOut,chrslt.user],function(err,rslt) {
+    return where(db.challenges, '"timeOut"=$1 and "user"=$2',[chrslt.timeOut,chrslt.user]).then(rslt => {
         //console.log("solutions found : "+rslt.length);
-        if (err) throw err;
         if (rslt.length > 0) {
             rslt = rslt[0];
             let strt = oxiDate.addDays(new Date(),-7);
@@ -132,10 +176,10 @@ export function upsert_challenge(chrslt, next) {
             if (strt > rslt.lastPlay || chrslt.points > rslt.points) {
                 console.log("saving challenge : "+ chrslt.points);
                 chrslt.rsltId = rslt.rsltId;
-                db.challenges.save(chrslt, next);
-            } else if (next) next(err,chrslt);
+                return update(db.challenges, chrslt);
+            } else return {ok: true};
         } else {
-            db.challenges.insert( chrslt, next) ;
+            return insert(db.challenges, chrslt) ;
         }
     });
 };
@@ -156,69 +200,31 @@ export function shift_solutions(ufrom, uto) {
 
 export function get_solutions(pzlId) {
     //console.log("getting solutions for "+pzlId);
-    return new Promise( function(resolve,reject) {
-        db.solutions.where("puzzle=$1 and completed=true", [pzlId], function (err,rslt) {
-            if (err) reject(err);
-            else resolve(rslt);
-        });
-    });
+    return where(db.solutions, "puzzle=$1 and completed=true", [pzlId]);
 };
 
 export function get_challenges(tmOut) {
     //console.log("getting solutions for "+pzlId);
-    return new Promise( function(resolve,reject) {
-        let strt = oxiDate.toFormat(oxiDate.addDays(new Date(),-7),'yyyyMMdd');
-        db.query('select * from challenges where "timeOut"=$1 and "lastPlay" > $2 order by points desc limit 10', [tmOut,strt], function (err,rslt) {
-            if (err) reject(err);
-            else resolve(rslt);
-        });
-    });
+    let strt = oxiDate.toFormat(oxiDate.addDays(new Date(),-7),'yyyyMMdd');
+    return query('select * from challenges where "timeOut"=$1 and "lastPlay" > $2 order by points desc limit 10', [tmOut,strt]);
 };
 
 export function get_puzzle(pzlId) {
     //console.log("getting puzzle "+pzlId);
-    return new Promise( function(resolve,reject) {
-        db.puzzles.findOne(pzlId, function (err,rslt) {
-            if (err) reject(err);
-            else {
-                rslt.layout.pubID = pzlId;
-                resolve(rslt.layout);
-            }
-        });
+    return findOne( db.puzzles, pzlId).then(rslt => {
+        rslt.layout.pubID = pzlId;
+        return rslt.layout;
     });
 };
 
 export function get_day(dt) {
     //console.log("getting day "+cdt);
-    return new Promise( function(resolve,reject) {
-        db.days.find({date: dt}, function (err,rslt) {
-            if (err) reject(err);
-            else {
-                let res = new Array(rslt.length);
-                rslt.forEach(function (r) {
-                    res[r.pos] = r.puzzle;
-                });
-                resolve(res);
-            }
+    return find( db.days, {date: dt}).then(rslt => {
+        let res = new Array(rslt.length);
+        rslt.forEach(function (r) {
+            res[r.pos] = r.puzzle;
         });
-    });
-};
-
-export function query(cmd,prms) {
-    return new Promise( function(resolve,reject) {
-        db.query(cmd,prms, function (err,rslt) {
-            if (err) reject(err);
-            else resolve(rslt);
-        });
-    });
-};
-
-export function save(tbl,o) {
-    return new Promise( function(resolve,reject) {
-        tbl.save(o, function (err,rslt) {
-            if (err) reject(err);
-            else resolve(rslt);
-        });
+        return res;
     });
 };
 

@@ -35,10 +35,6 @@ export function blankLink() {
 }
 
 const LOAD = 'link/LOAD';
-<<<<<<< HEAD
-const SELECT = 'link/SELECT';
-=======
->>>>>>> 350f4b7b818b83ea468b86a5fa3a34843d596dd2
 const UPDATE = 'link/UPDATE';
 const STARTEDIT = 'link/STARTEDIT';
 const STOPEDIT = 'link/STOPEDIT';

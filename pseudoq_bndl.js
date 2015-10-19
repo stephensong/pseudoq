@@ -124,6 +124,7 @@
 	var blogReducer = _require.blogReducer;
 	var Blog = _require.Blog;
 	var BlogPost = _require.BlogPost;
+	var BlogEntry = _require.BlogEntry;
 	
 	var _require2 = __webpack_require__(255);
 	
@@ -5568,8 +5569,9 @@
 	    return rslt;
 	};
 	
-	oxiDate.parse = function (date, format) {
-	    return getDateFromFormat(date, format);
+	oxiDate.parse = function (cdate, format) {
+	    if (!format) return Date.parse(cdate);
+	    return getDateFromFormat(cdate, format);
 	};
 	
 	oxiDate.validateDay = function (day, year, month) {
@@ -35639,7 +35641,6 @@
 	}
 	
 	var LOAD = 'link/LOAD';
-	var SELECT = 'link/SELECT';
 	var UPDATE = 'link/UPDATE';
 	var STARTEDIT = 'link/STARTEDIT';
 	var STOPEDIT = 'link/STOPEDIT';
@@ -35648,9 +35649,7 @@
 	var UNEXPAND = 'link/UNEXPAND';
 	
 	var initState = {
-	    links: [],
-	    currentLink: null,
-	    editing: false
+	    links: []
 	};
 	
 	function linksReducer(state, action) {
@@ -35661,26 +35660,39 @@
 	
 	        case LOAD:
 	            if (action.links.length === 0) return state;
-	            var rslt = _extends({}, state, { currentLink: action.links[0], links: action.links });
+	            var rslt = _extends({}, state, { links: action.links });
 	            return rslt;
 	
-	        case SELECT:
-	            return _extends({}, state, { currentLink: action.link });
-	
 	        case EDITNEW:
-	            return _extends({}, state, { currentLink: _extends({}, blankLink(), { editing: true }) });
+	            var nl = blankLink();
+	            nl.editing = true;
+	            news = state.links.slice(0);
+	            news.unshift(nl);
+	            return _extends({}, state, { links: news });
 	
 	        case EXPAND:
-	            return _extends({}, state, { currentLink: _extends({}, state.currentLink, { expanded: true }) });
+	            news = state.links.map(function (l) {
+	                return l === action.link ? _extends({}, l, { expanded: true }) : l;
+	            });
+	            return _extends({}, state, { links: news });
 	
 	        case UNEXPAND:
-	            return _extends({}, state, { currentLink: _extends({}, state.currentLink, { expanded: false }) });
+	            news = state.links.map(function (l) {
+	                return l === action.link ? _extends({}, l, { expanded: false }) : l;
+	            });
+	            return _extends({}, state, { links: news });
 	
 	        case STARTEDIT:
-	            return _extends({}, state, { currentLink: _extends({}, currentLink, { editing: true }) });
+	            news = state.links.map(function (l) {
+	                return l === action.link ? _extends({}, l, { editing: true }) : l;
+	            });
+	            return _extends({}, state, { links: news });
 	
 	        case STOPEDIT:
-	            return _extends({}, state, { currentLink: _extends({}, currentLink, { editing: false }) });
+	            news = state.links.map(function (l) {
+	                return l === action.link ? _extends({}, l, { editing: false }) : l;
+	            });
+	            return _extends({}, state, { links: news });
 	
 	        case UPDATE:
 	            var links = state.links;
@@ -35708,7 +35720,9 @@
 	        var notes = this.refs.notes.getValue();
 	        var xhr = new XMLHttpRequest();
 	        var link = _extends({}, this.props.link, { url: url, notes: notes, tags: tags });
-	        xhr.open("link", "/link");
+	        delete link.editing;
+	        delete link.expanded;
+	        xhr.open("POST", "/link");
 	        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 	        xhr.onload = function () {
 	            var rslt = JSON.parse(xhr.responseText);
@@ -35726,17 +35740,17 @@
 	    },
 	
 	    startEdit: function startEdit() {
-	        this.props.dispatch({ type: STARTEDIT });
+	        this.props.dispatch({ type: STARTEDIT, link: this.props.link });
 	    },
 	    stopEdit: function stopEdit() {
-	        this.props.dispatch({ type: STOPEDIT });
-	    },
-	    editNew: function editNew() {
-	        this.props.dispatch({ type: EDITNEW });
+	        this.props.dispatch({ type: STOPEDIT, link: this.props.link });
 	    },
 	
 	    render: function render() {
-	        var link = this.props.link;
+	        var _props = this.props;
+	        var link = _props.link;
+	        var dispatch = _props.dispatch;
+	
 	        if (!link) return null;
 	        var tags = link.tags.join(' ');
 	        if (link.editing) {
@@ -35746,7 +35760,7 @@
 	                React.createElement(
 	                    Flex,
 	                    { column: true, style: { flex: '1 1 auto', marginRight: 20 } },
-	                    React.createElement(Input, { type: 'text', style: { height: 40, width: '100%' }, ref: 'url', label: 'Title', defaultValue: link.url }),
+	                    React.createElement(Input, { type: 'text', style: { height: 40, width: '100%' }, ref: 'url', label: 'Url', defaultValue: link.url }),
 	                    React.createElement(Input, { type: 'textarea', style: { width: '100%', height: 400 }, ref: 'notes', label: 'Notes', defaultValue: link.notes }),
 	                    React.createElement(Input, { type: 'text', style: { height: 40, width: '100%' }, ref: 'tags', label: 'Tags', defaultValue: tags })
 	                ),
@@ -35787,41 +35801,40 @@
 	                            Button,
 	                            { key: 'edit', bsSize: 'small', style: { width: 100, height: '100%', marginTop: 0, marginRight: 10 }, onClick: this.startEdit, block: true },
 	                            'Edit'
-	                        ),
-	                        React.createElement(
-	                            Button,
-	                            { key: 'new', bsSize: 'small', style: { width: 100, height: '100%', marginTop: 0, marginRight: 10 }, onClick: this.editNew, block: true },
-	                            'New'
 	                        )
 	                    );
 	                }
 	                h = React.createElement(
 	                    Flex,
 	                    { row: true },
-	                    React.createElement('div', { dangerouslySetInnerHTML: { __html: md.render(link.notes) } }),
 	                    React.createElement(
 	                        Flex,
-	                        { row: true, style: { justifyContent: 'space-between' } },
+	                        { column: true, style: { width: '100%' } },
+	                        React.createElement(Flex, { row: true, style: { width: '100%' }, dangerouslySetInnerHTML: { __html: md.render(link.notes) } }),
 	                        React.createElement(
-	                            'div',
-	                            null,
-	                            'Id: ',
-	                            link.id
+	                            Flex,
+	                            { row: true, style: { width: '100%', justifyContent: 'space-between' } },
+	                            React.createElement(
+	                                'div',
+	                                null,
+	                                'Id: ',
+	                                link.id
+	                            ),
+	                            React.createElement(
+	                                'div',
+	                                null,
+	                                'Published: ',
+	                                pub
+	                            ),
+	                            React.createElement(
+	                                'div',
+	                                null,
+	                                'Last Edit: ',
+	                                lstedit
+	                            )
 	                        ),
-	                        React.createElement(
-	                            'div',
-	                            null,
-	                            'Published: ',
-	                            pub
-	                        ),
-	                        React.createElement(
-	                            'div',
-	                            null,
-	                            'Last Edit: ',
-	                            lstedit
-	                        )
-	                    ),
-	                    edits
+	                        edits
+	                    )
 	                );
 	            }
 	
@@ -35830,9 +35843,7 @@
 	                null,
 	                React.createElement(
 	                    Flex,
-	                    { row: true, key: link.id, onClick: function () {
-	                            return dispatch({ type: SELECT, link: link });
-	                        } },
+	                    { row: true, key: link.id },
 	                    React.createElement(
 	                        Flex,
 	                        { col: true, style: { flex: '5 1 auto' } },
@@ -35872,12 +35883,16 @@
 	        xhr.send();
 	    },
 	
-	    render: function render() {
-	        var _props = this.props;
-	        var links = _props.links;
-	        var dispatch = _props.dispatch;
+	    editNew: function editNew() {
+	        console.log("edit new");this.props.dispatch({ type: EDITNEW });
+	    },
 	
-	        if (links.length === 0) return null;
+	    render: function render() {
+	        var _props2 = this.props;
+	        var links = _props2.links;
+	        var dispatch = _props2.dispatch;
+	
+	        //if (links.length === 0) return null;
 	        var entries = links.map(function (link) {
 	            return React.createElement(LinkEntry, { key: link.id, dispatch: dispatch, link: link });
 	        });
@@ -35892,7 +35907,12 @@
 	            ),
 	            React.createElement('p', null),
 	            entries,
-	            React.createElement('p', null)
+	            React.createElement('p', null),
+	            React.createElement(
+	                Button,
+	                { key: 'new', bsSize: 'small', style: { width: 100, height: '100%', marginTop: 0, marginRight: 10 }, onClick: this.editNew, block: true },
+	                'New'
+	            )
 	        );
 	    }
 	});
@@ -36116,6 +36136,15 @@
 	                                _reactRouter.Link,
 	                                { to: '/blog' },
 	                                'Blog'
+	                            )
+	                        ),
+	                        React.createElement(
+	                            'li',
+	                            null,
+	                            React.createElement(
+	                                _reactRouter.Link,
+	                                { to: '/links' },
+	                                'Links'
 	                            )
 	                        ),
 	                        React.createElement(

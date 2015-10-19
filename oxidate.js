@@ -370,8 +370,9 @@ oxiDate.fromUTC = function (date) {
     return rslt;
 };
 
-oxiDate.parse = function (date, format) {
-    return getDateFromFormat(date, format);
+oxiDate.parse = function (cdate, format) {
+    if (!format) return new Date(cdate);   
+    return getDateFromFormat(cdate, format);
 };
 
 oxiDate.validateDay = function (day, year, month) {
