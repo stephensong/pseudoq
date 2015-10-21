@@ -1,9 +1,9 @@
 # pseudoq
 
-A site (http://www.pseudoq.net) featuring online playable puzzles - at the moment a few varieties of Killer Sudoku, and Hidato.  
+A site (https://www.pseudoq.net) featuring online playable puzzles - at the moment a few varieties of Killer Sudoku, and Hidato.  
 Hopefully more will be forthcoming.
 
-The site is developed using React, Redux and Koa, and is deployed on Heroku, currently as a freebie, "hobby" site. 
+The site is developed using React, Redux and Koa, and is deployed on Heroku, currently as a "hobby" site. 
 At the moment it also uses React-Bootstrap (and therefore jquery, ...), but hopefully this dependency will be removed in 
 the not-too-distant future.
 
