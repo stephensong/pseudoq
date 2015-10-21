@@ -5,8 +5,10 @@ window.jQuery = require('jquery');
 require('./css/bootstrap-flatly.css');
 require('./css/psq.css');
 require('bootstrap');
-let oxiDate = require('./oxidate.js');
-let utils = require('./utils.js');
+
+const oxiDate = require('./oxidate.js');
+const { isMember } = require('./utils.js');
+const uuid = require('./uuid.js');
 
 const timeSpan = require('timeSpan');
 
@@ -24,6 +26,7 @@ import { connect } from 'react-redux';
 
 export function blankLink() {
     return {id: 0,
+            guid: uuid.generate(),
             published: null,
             lastedit: oxiDate.createUTC(),
             url: '',
@@ -41,49 +44,79 @@ const STOPEDIT = 'link/STOPEDIT';
 const EDITNEW = 'link/EDITNEW';
 const EXPAND = 'link/EXPAND';
 const UNEXPAND = 'link/UNEXPAND';
+const DELETE = 'link/DELETE';
+const ADDTAG = 'link/ADDTAG';
+const DROPTAG = 'link/DROPTAG';
 
 let initState = {
+    tags: [],
     links: []
 }
 
 export function linksReducer(state = initState, action) {
     console.log("linksReducer called");
+    let news = null;
+    let {links, tags} = state;
+    let i = 0;
     switch (action.type) {
 
         case LOAD:
             if (action.links.length === 0) return state;
-            let rslt = {... state, links: action.links};
+            let rslt = {...state, links: action.links};
             return rslt;
 
         case EDITNEW:
             let nl = blankLink();
             nl.editing = true;
-            news = state.links.slice(0)
+            news = links.slice(0)
             news.unshift(nl);
             return {...state, links: news };
 
         case EXPAND:
-            news = state.links.map(l => l === action.link ? {...l, expanded: true} : l)
+            news = links.map(l => l === action.link ? {...l, expanded: true} : l)
             return {...state, links: news };
 
         case UNEXPAND:
-            news = state.links.map(l => l === action.link ? {...l, expanded: false} : l)
+            news = links.map(l => l === action.link ? {...l, expanded: false} : l)
             return {...state, links: news };
 
         case STARTEDIT:
-            news = state.links.map(l => l === action.link ? {...l, editing: true} : l)
+            news = links.map(l => l === action.link ? {...l, editing: true} : l)
             return {...state, links: news };
 
         case STOPEDIT:
-            news = state.links.map(l => l === action.link ? {...l, editing: false} : l)
+            news = links.map(l => l === action.link ? {...l, editing: false} : l)
             return {...state, links: news };
 
-        case UPDATE:
-            let links = state.links
-            let i = links.findIndex(p => p.id === action.link.id);
-            let newlinks = i > 0 ? links.map(p => p.id === i ? action.link : p)
-                                 : [action.link, ...links];
-            return {...state, currentLink: {...action.link, editing: false}, links: newlinks};
+        case ADDTAG:
+            if (tags.indexOf(action.tag) >= 0) return state;
+            tags = [...tags, action.tag]
+            return {...state, tags };
+
+        case DROPTAG:
+            i = tags.indexOf(action.tag);
+            if (i < 0) return state;
+            tags = tags.slice(0);
+            tags.splice(i,1);
+            return {...state, tags };
+
+       case UPDATE:
+            var guid = action.link.guid;
+            var f = p => guid ? (p.guid === guid) : (p.id === action.link.id);
+            i = links.findIndex(f);
+            news = links.slice(0);
+            if (i >= 0 ) news.splice(i,1,action.link);
+            else news.unshift(action.link);
+            return {...state, links: news};
+
+        case DELETE:
+            var guid = action.link.guid;
+            var f = p => guid ? (p.guid === guid) : (p.id === action.link.id);
+            i = links.findIndex(f);
+            if (i < 0) return state;
+            news = links.slice(0);
+            news.splice(i,1);
+            return {...state, links: news};
 
         default: 
             return state;
@@ -94,27 +127,51 @@ let LinkEntry = React.createClass({
 
     save() {
         let url = this.refs.url.getValue();
+        if (!url) return;
         let tags = this.refs.tags.getValue().split(/[\s,]+/);
         let notes = this.refs.notes.getValue();
         let xhr = new XMLHttpRequest();   
         let link = {...this.props.link, url, notes, tags};
+        let guid = link.guid;
         delete link.editing;
         delete link.expanded;
+        delete link.guid;
         xhr.open("POST", "/link");
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onload = () => { 
             let rslt = JSON.parse(xhr.responseText);        
             if (rslt.ok) {
                 let {id, lastedit, published} = rslt.results;     
-                let newlink = {...link, id, lastedit: oxiDate.parseUTC(lastedit), published: oxiDate.parseUTC(published)};
+                let newlink = {...link, guid, id, lastedit: oxiDate.parseUTC(lastedit), published: oxiDate.parseUTC(published)};
                 this.props.dispatch({type: UPDATE, link: newlink});
             }
         };
         xhr.send(JSON.stringify(link));
     },
 
+    destroy() {
+        let xhr = new XMLHttpRequest();   
+        let link = this.props.link;
+        let id = link.id;
+        if (!id) {
+            this.props.dispatch({type: DELETE, link});
+            return;
+        }
+        xhr.open("POST", "/link/delete");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = () => { 
+            //console.log(xhr.responseText);     
+            let rslt = JSON.parse(xhr.responseText);   
+            if (rslt.length === 1) {
+                this.props.dispatch({type: DELETE, link});
+            }
+        };
+        xhr.send(JSON.stringify({id}));
+    },
+
     startEdit() { this.props.dispatch({type: STARTEDIT, link: this.props.link}) },
-    stopEdit() { this.props.dispatch({type: STOPEDIT, link: this.props.link}) },
+    stopEdit() { this.props.dispatch({type: this.props.link.id > 0 ? STOPEDIT : DELETE, link: this.props.link}) },
+    addTag(tag) { this.props.dispatch({type: ADDTAG, tag}) }, 
 
     render() {
         let {link, dispatch} = this.props; 
@@ -136,14 +193,15 @@ let LinkEntry = React.createClass({
         } else {
             let h = null;
             let edits = null;
-            let expBtn = ( <Button bsSize='small' block onClick={ () => dispatch({type: link.expanded ? UNEXPAND : EXPAND, link: link})}>{link.expanded ? '-' : '+'}</Button> );
+            let expBtn = ( <Button bsSize='small' style={{width: 30, margin: 5}} block onClick={ () => dispatch({type: link.expanded ? UNEXPAND : EXPAND, link})}>{link.expanded ? '-' : '+'}</Button> );
+            let tagbtns = link.tags.map(t => { return (<Button key={'tag:'+t} bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={ () => { this.addTag(t); }} >{t}</Button> ); } );
             if (link.expanded) {
                 let lstedit = link.lastedit ? oxiDate.toFormat(link.lastedit, 'DDDD, MMMM D @ HH:MIP') : '';
                 let pub = link.published ? oxiDate.toFormat(link.published, 'DDDD, MMMM D @ HH:MIP') : '';
-	            let userName = localStorage.getItem('pseudoq.userName');
-	            if (process.env.NODE_ENV !== 'production' || userName === 'gary2') {
+	            if (process.env.NODE_ENV !== 'production' || isMember('author')) {
 	                edits = ( <Flex row style={{justifyContent: 'flex-start', alignItems: 'stretch', height: 30}}>
-	                           <Button key='edit' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.startEdit} block >Edit</Button> 
+                               <Button key='edit' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.startEdit} block >Edit</Button> 
+                               <Button key='del' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.destroy} block >Delete</Button> 
 	                        </Flex> );
                 }
             	h = (<Flex row>
@@ -159,12 +217,14 @@ let LinkEntry = React.createClass({
 	                 </Flex> 
 	                );
 	        }
-
+            let url = link.url.trim();
+            if (url.substring(0,4).toLowerCase() !== 'http') url = 'http://' + url
             return (
               <div>
-                <Flex row key={ link.id } >
-                    <Flex col style={{flex: '5 1 auto'}}><a >{ link.url.trim() }</a></Flex>
-                    <Flex col style={{flex: '1 0 auto'}}>{ expBtn }</Flex> 
+                <Flex row key={ link.id } style={{alignItems: 'center'}} >
+                    <Flex col style={{flex: '0 0 auto'}}>{ expBtn }</Flex> 
+                    <Flex col style={{flex: '5 1 auto'}}><a href={ url }  target="_blank">{ url }</a></Flex>
+                    <Flex col style={{flex: '0 0 auto'}}>{ tagbtns }</Flex>
                 </Flex>
                 {h}
               </div>  );
@@ -186,17 +246,28 @@ let _links = React.createClass({
     },
 
     editNew() { console.log("edit new"); this.props.dispatch({type: EDITNEW}); },
+    dropTag(tag) { this.props.dispatch({type: DROPTAG, tag}) },
+
 
     render() {
-        let {links, dispatch} = this.props;
-        //if (links.length === 0) return null;
-        let entries = links.map( link => {
+        let {links, dispatch, tags} = this.props;
+       //if (links.length === 0) return null;
+        let tagMatch = (ps, qs) => { return ps.some(p => qs.indexOf(p) >= 0) };
+        let entries = links.filter( link => ( tags.length === 0 || tagMatch(link.tags, tags) ) )
+                           .map( link => {
         	return <LinkEntry key={link.id} dispatch={ dispatch } link={ link } />
         });
+
+        let fltr = null
+        if (tags.length > 0) {
+            let fltrtags = this.props.tags.map(t => { return (<Button key={'fltr:'+t} bsSize='small' onClick={ () => { this.dropTag(t); }} style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} >{t}</Button> ); });
+            fltr = ( <Flex row><span>Showing entries tagged :  { fltrtags }</span></Flex> );
+        }
 
         return (
             <div>
                 <h2>Links</h2> 
+                {fltr}
                 <p/>
                 {entries}
                 <p/>

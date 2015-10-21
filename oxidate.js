@@ -350,8 +350,12 @@ oxiDate.createUTC = function() {
     return oxiDate.toUTC( new Date());
 }
 
+oxiDate.parse = function (cdt, format) {
+    return format ? getDateFromFormat(cdt, format) : new Date(cdt);
+};
+
 oxiDate.parseUTC = function (cdt, format) {
-    let rslt = format ? getDateFromFormat(cdt, format) : new Date(cdt);
+    let rslt = oxiDate.parse(cdt,format);
     rslt.isUTC = true;
     return rslt;
 };
@@ -368,11 +372,6 @@ oxiDate.fromUTC = function (date) {
     let rslt = oxiDate.addMinutes(date, -offsetMinutes);
     rslt.isUTC = false;
     return rslt;
-};
-
-oxiDate.parse = function (cdate, format) {
-    if (!format) return new Date(cdate);   
-    return getDateFromFormat(cdate, format);
 };
 
 oxiDate.validateDay = function (day, year, month) {

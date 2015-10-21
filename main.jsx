@@ -8,7 +8,7 @@ require('bootstrap');
 
 
 let oxiDate = require('./oxidate.js');
-let utils = require('./utils.js');
+let { isMember } = require('./utils.js');
 let grph = require('graphics');
 
 var React = require('react');
@@ -18,8 +18,6 @@ const { Button, Input } = ReactBootStrap;
 
 var NavItem = ReactBootStrap.NavItem;
 var Nav = ReactBootStrap.Nav;
-
-var Utils = require('utils');
 
 export let About = require('PseudoqAbout.jsx');
 var PseudoqHelp = require('PseudoqHelp.jsx');
@@ -119,6 +117,10 @@ var fetchContents = function() {
             if (prov)  localStorage.setItem('pseudoq.authprov', prov);
             else localStorage.removeItem('pseudoq.authprov');
 
+            let grps = xhr.getResponseHeader('X-psq-groups') || '';
+            grps = grps.replace('}',',');
+            localStorage.setItem('pseudoq.groups', grps);
+
             if (xhr.status == 200) {
                 try { 
                     let t = JSON.parse(xhr.responseText);
@@ -146,8 +148,7 @@ export let App = React.createClass({displayName: 'App',
         let lis = prov ? (<Link to='/logout'>Sign Out ({prov})</Link>)
                        : (<Link to='/login'>Sign In</Link>) ;
 
-        // how should this really be done??
-        let lis2 = (userName === 'gary2' ) ? [ <li key='blog' ><Link to="/blog">Blog</Link></li>, <li key='links' ><Link to="/links">Links</Link></li> ]
+        let lis2 = (isMember('member')) ? [ <li key='blog' ><Link to="/blog">Blog</Link></li>, <li key='links' ><Link to="/links">Links</Link></li> ]
                                            : [];
         return (
             <div onDoubleClick={this.handleDoubleClick} >
@@ -210,10 +211,22 @@ export let Login = React.createClass({displayName: 'Login',
 */
     render: function () {
         return (
+            <div>
       <ul>
         <li><a href="/auth/facebook">Sign in via Facebook</a></li>
         <li><a href="/auth/twitter">Sign in via Twitter</a></li> 
-      </ul>        
+      </ul> 
+      <p/>       
+      <h3>Security Policy</h3>
+      <p>This site refuses to ask you for a password.  This means we don&apos;t have to store, encrypt or otherwise
+      concern ourselves with any of your personal data.  Currently, the <strong>only</strong> thing we store about you
+      is your moniker, along with games in progress, solutions submitted etc.</p>
+      <p>In order to still reliably identify you, allowing e.g. for games in progress to be accessed across multiple devices, we
+      ask that you identify yourself using a "social login", currently either Facebook or Twitter.  Essentially, this means that we rely on you
+      identifying yourself to a third party, who then vouches for your identity to us.  If you would prefer to use another social
+      login provider (Google, LinkedIn, Pinterest, ...) please email your request, and we will endeavour to accomodate you.  
+      </p>
+           </div>
       );
         //<li><a href="/auth/google">Sign in via Google</a></li>
     }

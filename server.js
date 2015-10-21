@@ -1,25 +1,31 @@
 "use strict";
 
-let fs = require('fs');
-let Promise = require("bluebird");
+const fs = require('fs');
+const Promise = require("bluebird");
 
-let koa = require("koa");
-let bodyParser = require('koa-bodyparser');
-let session = require('koa-session');
-let router = require('koa-route');
+const koa = require("koa");
+const bodyParser = require('koa-bodyparser');
+const session = require('koa-session');
+const router = require('koa-route');
 //let flash = require('koa-flash');
 //let thunk = require('thunkify');
 //let send = require('koa-send')
 
-let oxiDate = require('./oxidate.js');
-let utils = require('./utils.js');
+const oxiDate = require('./oxidate.js');
+const {solutionSorter} = require('./utils.js');
 import * as pg from './pgsql.js';
-let uuid = require('./uuid.js');
-let jwt = require('./jwt.js');
+const uuid = require('./uuid.js');
+const jwt = require('./jwt.js');
 
 let jwt_secret = process.env.JWT_SECRET_KEY;
 
 //let coReadFile = thunk(fs.readFile);
+
+function isMember(grp, ctx) {
+    let grps = ctx.userId.groups;
+    return grps && grps.indexOf(grp+',') >= 0;
+
+}
 
 Promise.promisifyAll(fs);
 
@@ -69,7 +75,7 @@ let getSolutions = function (j) {
         let solns = pg.get_solutions(j)
                     .then( function(a ) { 
                         //console.log(a.length.toString() + " solutions found");
-                        a.sort(utils.solutionSorter); 
+                        a.sort(solutionSorter); 
                         if (a.length > 10) a.length = 10;
                         return a;
                     });
@@ -192,7 +198,7 @@ let createUser = function (ctx) {
         if (!checkMonikerUsed(nm)) break;
         ++i;
     }
-    let id = uuid();
+    let id = uuid.generate();
     console.log("creating user : " + nm + ", time : " + (new Date()).toString());
     console.log(JSON.stringify(ctx));
     return pg.insert_user(id, nm).then( function (user) {
@@ -226,6 +232,7 @@ let authent =  function *(ctx, prov, authId) {
             yield pg.insert_auth(prov,authId,ctx.userId.id);
         }
         ctx.userId.auth = prov + ':' + authId;
+        ctx.userId.groups = user.groups;
         let tok = jwt.sign(ctx.userId, jwt_secret); //{expiresInMinutes: 60*24*14});
         ctx.cookies.set('psq_user', tok);
         yield ctx.login(user)
@@ -268,8 +275,12 @@ app.use(function *(next) {
     {
         let auth = this.userId.auth;
         let prov = auth.slice(0,auth.indexOf(':'));
+        let grps = this.userId.groups || '';
         //console.log("setting provider : "+ prov);
         this.set('X-psq-authprov', prov);
+        //console.log("setting groups : "+ grps);
+        this.set('X-psq-groups', grps);
+        pg.touch_user(this.userId.id);
     }
     
 });
@@ -398,7 +409,8 @@ app.use(router.get('/logout', function *() {
     if (auth) {
         //pg.auths.destroy({auth, function (err,rslt) { });
         delete this.userId.auth;
-        console.log('changing token');
+        delete this.userId.groups;
+        //console.log('changing token');
         let tok = jwt.sign(this.userId, jwt_secret); //{expiresInMinutes: 60*24*14});
         this.cookies.set('psq_user', tok);
     }
@@ -434,7 +446,7 @@ app.use(router.get('/auth/twitter', function *() {
 }));
 
 app.use(router.get('/blog/latest', function *() {
-    this.body = yield pg.query('select id,published,lastedit,title,body,tags from blog order by id desc limit 5')
+    this.body = yield pg.query('select id,published,lastedit,title,body,tags from blog order by id desc limit 100')
 }));
 
 
@@ -443,8 +455,38 @@ app.use(router.get('/blog/:id', function *(cid) {
     this.body = yield pg.query('select id,published,lastedit,title,body,tags from blog where id = '+id.toString());
 }));
 
+app.use(router.get('/blog/after/:id', function *(cid) {
+    let id = parseInt(cid);
+    this.body = yield pg.query('select id,published,lastedit,title,body,tags from blog where id > '+id.toString());
+}));
+
+app.use(router.get('/blog/tags', function *() {
+    //console.log('path: '+this.path);
+    console.log('url: '+this.url);
+    let url = this.url;
+    let tags = []
+    while (true) {
+        let i = url.indexOf('?tag=');
+        if (i < 0) break;
+        url = url.substring(i+5);
+        let j = url.indexOf('?tag=');
+        let tag = j < 0 ? url : url.substring(0,j);
+        tags.push(tag); 
+    }
+    if (tags.length === 0) {
+        this.body = yield pg.query('select id,published,lastedit,title,body,tags from blog order by id desc limit 100');
+    } else {
+        this.body = yield pg.query("select id,published,lastedit,title,body,tags from blog where ARRAY['"+ tags.join("','") +"'] && tags::text[] order by id desc");
+    }
+}));
+
 app.use(router.post('/blog/save', function *() {
     let post = this.request.body;
+    if (!isMember('author', this)) {
+        console.log('unauthorised attempt to save blog post: '+post.id);
+        this.body = yield {ok: false, error: "unauthorised"};
+        return;
+    }
     console.log('saving blog post: '+post.id);
     if (!post.id) {
         post.published = new Date();
@@ -463,6 +505,7 @@ app.use(router.post('/blog/save', function *() {
 }));
 
 app.use(router.get('/links', function *() {
+    console.log("/links called");
     this.body = yield pg.query('select id,published,lastedit,url,notes,tags from links order by id desc')
 }));
 
@@ -471,8 +514,24 @@ app.use(router.get('/link/:id', function *(cid) {
     this.body = yield pg.query('select id,published,lastedit,url,notes,tags from links where id = '+id.toString())
 }));
 
+app.use(router.post('/link/delete', function *() {
+    if (!isMember('author', this)) {
+        console.log('unauthorised attempt to delete link(s)');
+        this.body = yield {ok: false, error: "unauthorised"};
+        return;
+    }
+
+    this.body = yield pg.destroy(pg.db.links,this.request.body);
+}));
+
 app.use(router.post('/link', function *() {
     let link = this.request.body;
+    if (!isMember('author', this)) {
+        console.log('unauthorised attempt to save link');
+        this.body = yield {ok: false, error: "unauthorised"};
+        return;
+    }
+
     console.log('saving link: '+link.id);
     if (!link.id) {
         link.published = new Date();

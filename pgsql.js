@@ -13,7 +13,6 @@ let pg = require('pg');
 
 let deasync = require('deasync');
 
-let uuid = require('./uuid.js');
 let util = require('util');
 
 let querySync = function(sql,args) {
@@ -42,7 +41,7 @@ export const db = massive.loadSync({connectionString: url});
 
 let userRows = querySync("select * from users").rows;
 export const users = Object.create(null);
-userRows.forEach(function(r) { users[r.userId] = r; });
+userRows.forEach( r => { users[r.userId] = r; });
 users.count = userRows.length;
 
 let authRows = querySync("select * from auths").rows;
@@ -112,6 +111,15 @@ export function save(tbl,o) {
     });
 };
 
+export function destroy(tbl,o) {
+    return new Promise( function(resolve,reject) {
+        tbl.destroy(o, function (err,rslt) {
+            if (err) reject(err);
+            else resolve(rslt);
+        });
+    });
+};
+
 export function insert_user(id, userName) {
     //console.log('Inserting user : ' + userName ) ;
     let dt = new Date();
@@ -139,13 +147,22 @@ export function get_user_from_auth(prov, authId) {
     return rslt;
 };
 
-export function set_user_name(userId, newName, next) {
+export function set_user_name(userId, newName) {
     let usr = users[userId];
-    if (!usr) return insert_user(id,newName,next);
+    if (!usr) return insert_user(id,newName);
     if (usr.userName === newName) return;
     let dt = new Date();
     return query('update users set "userName" = $2, updated = $3 where "userId" = $1',[userId,newName,dt]).then(rslt => {
         usr.userName = newName;
+        usr.updated = dt;
+        return usr;
+    });
+};
+
+export function touch_user(userId) {
+    let usr = users[userId];
+    let dt = new Date();
+    return query('update users set updated = $2 where "userId" = $1',[userId,dt]).then(rslt => {
         usr.updated = dt;
         return usr;
     });

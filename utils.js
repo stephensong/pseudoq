@@ -1,8 +1,6 @@
 "use strict";
 
-var mod = {};
-
-mod.solutionSorter = function (a,b) { 
+export function solutionSorter(a,b) { 
     let ma = a.doc.moves;
     let mb = b.doc.moves;
     let acnt = ma[ma.length - 1].moveCount;
@@ -11,4 +9,8 @@ mod.solutionSorter = function (a,b) {
 
 };
 
-module.exports = mod;
+export function isMember(grp) {
+	let grps = localStorage.getItem('pseudoq.groups');
+	return grps && grps.indexOf(grp+',') >= 0;
+
+}
