@@ -53,7 +53,7 @@ let initState = {
 }
 
 export function blogReducer(state = initState, action) {
-    console.log("blogReducer called");
+    //console.log("blogReducer called");
     let tags = state.tags
     switch (action.type) {
 

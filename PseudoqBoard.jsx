@@ -27,22 +27,10 @@ let ColwisePickerPanel = PickerPanels.Colwise;
 let RowwisePickerPanel = PickerPanels.Rowwise;
 let tinycolor = require('tinycolor2');
 let Flex = require('flex.jsx');
-//let carota = require('carota');
 let renderedBoards = {};
 
-let renderBoard = function(brd,mode) {
-    let ky = brd.pubID.toString() + brd.unitsize + (mode === 'view' ? '1' : '0') + (mode === 'completed' ? '1' : '0') ;
-    let cUrl = renderedBoards[ky];
-
-    if (!cUrl) {
-        //console.log('rendering : '+mode);
-        let d = grph.Drawer(brd);
-        let canvas = d.drawLayout();
-        cUrl = canvas.toDataURL();
-        renderedBoards[ky] = cUrl;
-    }
-    return cUrl;
-}
+import { connect } from 'react-redux';
+import { createSelector } from 'reselect';
 
 
 let vals = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -152,14 +140,14 @@ let RestartModal = React.createClass({
 });
 
 let Poss = React.createClass({
-    handleRightClick: function(e) {
+    handleRightClick(e) {
         if (this.props.mode === 'play') {
             this.props.setCellValue(this.props.val);
             e.preventDefault();
         }
     },
 
-    render: function() {
+    render() {
         let board = this.props.board;
         let styl = {
                 display: 'block',
@@ -183,64 +171,31 @@ let Poss = React.createClass({
 
 });
 
-let GameState = React.createClass({
-    getInitialState: function() {
-        return {
-            notused: true
-        }
-    },
-    render: function() {
-
-    }
-});
-
-/*
-let Carota = React.createClass({
-    render: function() {
-        let div = <div></div>;
-        let editor = carota.editor.create(div);
-        return editor;
-    }
-});
-*/
-
 let Cell = React.createClass({
-    getInitialState: function() {
-        return {
-            promoted: false
-        }
+
+    handleClick() {
+        let mode = this.props.board.mode;
+        if (mode === 'play') this.props.handleClick(this);
     },
 
-    handleClick: function() {
-        if (this.props.mode === 'play' || this.props.mode === 'review') this.props.handleClick(this);
-    },
-
-    handleKeyPress: function(e) {
-        if (this.props.mode === 'play') {
+    handleKeyPress(e) {
+        if (this.props.board.mode === 'play') {
             let it = e.which - 48;
             this.setCellValue(it);
         }
     },
 
-    setCellValue: function(it) {
+    setCellValue(it) {
         this.props.setCellValue(this.props.cid,it);
     },
 
-    render: function() {
+    render() {
         let id = this.props.cid;
-        let mdl = this.props.model;
-        let mode = this.props.mode;
         let board = this.props.board;
+        let mode = board.mode;
+        let mdl = board.model;
         let issel = this.props.issel;
-        let isreviewsel = mode === 'review' && this.props.isreviewsel;
         let ps = mdl[id];
-        /*
-        let cellSize = ( board.unitsize * (21 / 36) ) ;
-        let possSize = cellSize / 3;
-        let cellLeft = (cellSize / 6);
-        let cellTop = cellLeft + (board.unitsize / 25);
-        let fontSize = Math.floor( board.unitsize * 100 / 36 ).toString() + "%";
-        */
 
         let borderStyle = {
             display: 'block',
@@ -263,21 +218,15 @@ let Cell = React.createClass({
             margin: 0
         };
 
-        if (mode === 'review' && isreviewsel) borderStyle.backgroundColor = tinycolor("rgba (0, 0, 196, .1)");
-        else if (this.props.active && this.props.completed) {
+        if (this.props.active && this.props.completed) {
             //console.log("soln : "+this.props.solutionn+", "+( (typeof ps === 'object') ? ps[this.props.solution] : ps));
             let ok = (typeof ps === 'object' && ps[this.props.solution]) || ps === this.props.solution;
             if (!ok) cellStyle.backgroundColor = board.clrRed;
         }
 
+        if (!this.props.active) return( <div style={borderStyle} /> );
 
-
-        if (!this.props.active) {
-            return(
-                <div style={borderStyle} />
-            );
-
-        } else if (typeof ps === 'object') {
+        if (typeof ps === 'object') {
             let alltrue = true;
             vals.forEach( function(i) { if (!ps[i]) { alltrue = false; return; } });
             if (alltrue && !issel) {
@@ -290,7 +239,7 @@ let Cell = React.createClass({
                         let bkg = 'Transparent'; // board.clrBackGround;
                         let clr = ps[i] ? board.clrForeGround : 'Transparent';
                         if (issel && ps[i] ) {
-                            bkg = this.props.pickers[i] ? board.clrRed : board.clrGreen;
+                            bkg = board.pickers[i] ? board.clrRed : board.clrGreen;
                         }
                         return (
                             <Poss board={board} mode={mode} setCellValue={this.setCellValue} bkg={bkg} clr={clr} key={i} val={i} />
@@ -323,54 +272,54 @@ let Cell = React.createClass({
 
 let Timer = React.createClass({
 
-    getInitialState: function(){
+    getInitialState(){
         return { timer: null, elapsed: 0};
     },
 
-    componentDidMount: function(){
+    componentDidMount(){
         this.setState({timer: window.setInterval(this.tick, 500)});
     },
 
-    componentWillUnmount: function(){
+    componentWillUnmount(){
         window.clearInterval(this.state.timer);
     },
 
-    tick: function(){
+    tick(){
         if (!this.props.timer.isPaused()) {
-            this.setState({elapsed: this.props.timer.elapsed()});
+            this.postState({elapsed: this.props.timer.elapsed()});
         }        
     },
 
-    render: function() {
-        var elapsed = new timeSpan(this.state.elapsed);
+    render() {
+        var elapsed = new timeSpan(this.props.elapsed);
         return <span>{elapsed.toString()}</span>;
     }
 });
 
 let Progress = React.createClass({
 
-    getInitialState: function(){
-        return { timer: null, elapsed: 0};
+    getInitialState(){
+        return { ticker: null, elapsed: 0};
     },
 
-    componentDidMount: function(){
-        this.setState({timer: window.setInterval(this.tick, 500)});
+    componentDidMount(){
+        this.setState({ticker: window.setInterval(this.tick, 500)});
     },
 
-    componentWillUnmount: function(){
-        window.clearInterval(this.state.timer);
+    componentWillUnmount(){
+        window.clearInterval(this.state.ticker);
     },
 
-    tick: function(){
+    tick(){
         let el = Math.floor(this.props.timer.elapsed() / 1000);
         if (el >= this.props.timeOut) {
             if (this.props.onTimeout) this.props.onTimeout();
-            window.clearInterval(this.state.timer);
+            window.clearInterval(this.state.ticker);
         }
         this.setState({elapsed: el});
     },
 
-    render: function() {
+    render() {
         var elapsed = this.state.elapsed;
         //console.log("elapsed : "+elapsed);
         var tmOut = this.props.timeOut; 
@@ -397,112 +346,405 @@ let Progress = React.createClass({
 });
 
 
+function newPickers() { return [false,false,false,false,false,false,false,false,false,false]; };
 
-let PseudoqBoard = React.createClass({ 
+function newModel(cols,rows) {
+    let mdl = Object.create(null);
+    cols.forEach( function(c) {
+        rows.forEach( function(r) {
+            let trues = Object.create(null)
+            vals.forEach( function(i) {
+                trues[i] = true;
+            });
+            mdl[c+r] = trues;
+        });
+    }); 
+    mdl.comment = '';
+    mdl.moveCount = 0;
+    return mdl;
+};
 
-    statics: {
-        newPickers: function() { return [false,false,false,false,false,false,false,false,false,false]; },
-        newModel: function(cols,rows) {
-            let mdl = Object.create(null);
-            cols.forEach( function(c) {
-                rows.forEach( function(r) {
-                    let trues = Object.create(null)
-                    vals.forEach( function(i) {
-                        trues[i] = true;
-                    });
-                    mdl[c+r] = trues;
+const inactives = [
+      "J1", "K1", "L1", "J2", "K2", "L2", "J3", "K3", "L3",
+      "J4", "K4", "L4", "J5", "K5", "L5", "J6", "K6", "L6",
+      "J16", "K16", "L16", "J17", "K17", "L17", "J18", "K18", "L18",
+      "J19", "K19", "L19", "J20", "K20", "L20", "J21", "K21", "L21",
+      "A10", "B10", "C10", "D10", "E10", "F10", "P10", "Q10", "R10", "S10", "T10", "U10",
+      "A11", "B11", "C11", "D11", "E11", "F11", "P11", "Q11", "R11", "S11", "T11", "U11",
+      "A12", "B12", "C12", "D12", "E12", "F12", "P12", "Q12", "R12", "S12", "T12", "U12" ];
+
+function isCellActive(id) {
+    return inactives.indexOf(id) < 0;
+};
+
+function isCompleted(mdl, board) {
+    let soln = board.solution;
+    return board.cols.every( c => {
+        return board.rows.every( r => {
+            let id = c+r;
+            let ps = mdl[id];
+            let chk = soln[id];
+            return !isCellActive(id) || ( typeof ps !== 'object' ? ps === chk : vals.every( function (i) { return i === chk ? ps[i] : !ps[i]; }) );
+        });
+    });
+};
+
+function createModel(prnt) {
+    let mdl = Object.create(prnt);
+    mdl.comment = '';
+    mdl.moveCount = prnt.moveCount + 1;
+    return mdl;
+};
+
+function constructMoves(mdl,storeModel) {
+    let _cons = function _cons(mdl,storeModel) {
+        let prnt = Object.getPrototypeOf(mdl);
+        if (!prnt) return [];
+        let rslt = Object.getPrototypeOf(prnt) ? _cons(prnt,storeModel) : [];
+        let pstr = function(ps) {
+            let trslt = '';
+            if (typeof ps === 'object') vals.forEach( function(i) { if (ps[i]) { trslt += i.toString(); } } );
+            else trslt = ps.toString();
+            return trslt;
+        };
+        let a = {};
+        Object.keys(mdl).forEach( function(c) {
+            if (mdl[c]) {
+                let s = pstr(mdl[c]);
+                if (s.length < 9) a[c] = pstr(mdl[c]);
+            }
+        });
+        a.comment = mdl.comment; 
+        a.moveCount = mdl.moveCount;
+        if (storeModel) {
+            let t = {}
+            t.model = prnt;
+            t.move = a;
+            a = t;
+        }
+        rslt.push(a);
+        return rslt;
+    }
+    let rslt = _cons(mdl,storeModel);
+    if (storeModel) rslt.push({model: mdl, move: {dummy: true, comment: '', moveCount: mdl.moveCount}});
+    return rslt;
+
+};
+
+let initState = {
+    pickers: newPickers(),
+    selectedCells: [],
+    mode: 'view',
+    model: undefined,
+    autoEliminate: true,
+    autoPromote: false,
+    focusCell: undefined,
+    moveComment: '',
+    moveIndex: -1,   // currently only used in review mode
+    savedMoveCount: 0,
+    savedModel: undefined,
+    moves: [], 
+    solutions: [],
+    reSubmit: false,
+    completed: false,
+    pickerPanelPos: 'top',
+    unitsize: 54,
+    layoutNo: 1,
+    timer: null,
+    colorTag: 'Transparent'
+};
+
+function getLocalStorage(props) {
+    console.log("getLocalStorage called");
+    let {dayName, pos, pubID} = props;
+    let pzl = dayName + "/" + pos;
+    let mvs = localStorage.getItem('pseudoq.local.' + pzl);
+    let bmvs = props.moves;
+    if (mvs) {
+        mvs = JSON.parse(mvs);
+        if (mvs.pubID !== pubID) mvs = null;
+        else mvs = mvs.moves;
+    }
+    if (bmvs) bmvs = bmvs.moves;
+    let a = mvs && mvs.length > 0 ? mvs[mvs.length - 1].moveCount : -1; 
+    let b = bmvs && bmvs.length > 0 ? bmvs[bmvs.length - 1].moveCount : -1; 
+    if (b > a) mvs = bmvs;
+    return mvs;
+}
+
+function applyMoveToModel(orgmdl,m) {
+    let mdl = createModel(orgmdl);
+    Object.keys(m).forEach( function(cid) {
+        if (cid !== 'moveCount' && cid != 'comment' && cid != 'user' && mdl[cid]) {
+            let oks = m[cid];
+            if (oks.length === 1) {
+                mdl[cid] = parseInt(oks);
+            } else {
+                let ps = Object.create(null)
+                vals.forEach( function(i) {
+                    let c = i.toString();
+                    ps[i] = oks.indexOf(c) >= 0;
                 });
-            }); 
-            mdl.comment = '';
-            mdl.moveCount = 0;
-            return mdl;
-        },
+                mdl[cid] = ps;
+            }
+        }
+    }); 
+    mdl.comment = m.comment;
+    mdl.moveCount = m.moveCount;
+    mdl.user = m.user;
+    return mdl;
+};
 
-        createModel: function(prnt) {
-            let mdl = Object.create(prnt);
-            mdl.comment = '';
-            mdl.moveCount = prnt.moveCount + 1;
-            return mdl;
+function applyMovesToModel(org, mvs) {
+    let mdl = org;   
+    mvs.forEach( m => { mdl = applyMoveToModel(mdl,m); });
+    return mdl;
+};
+
+function initRegions(cols,rows) {
+    let regs = []
+    let sz = rows.length;
+    let origs =  sz === 9 ? [ [0,0 ] ]
+                          : [ [6,6], [0,0], [0,12], [12,0], [12,12] ];
+
+    origs.forEach( function(e) {
+        let x = e[0], y = e[1];
+        let cid;
+        let reg;
+        for (let c = 0; c < 9; c++) {
+            reg = []; 
+            for (let r = 0; r < 9; r++) {
+                cid = cols[x+c] + rows[y+r]
+                reg.push(cid);
+            };
+            regs.push(reg)
+        }; 
+
+        for (let r = 0; r < 9; r++) {
+            reg = []; 
+            for (let c = 0; c < 9; c++) {
+                cid = cols[x+c] + rows[y+r]
+                reg.push(cid);
+            };
+            regs.push(reg)
+        }; 
+
+        let a = [0,1,2];
+
+        for (let n = 0; n < 9; n++) {
+            let x0 = ( n % 3 ) * 3;
+            let y0 = Math.floor( n / 3 ) * 3;
+            reg = [];
+            a.forEach( function (i) {
+                a.forEach( function (j) {
+                    cid = cols[x+x0+i] + rows[y+y0+j]
+                    reg.push(cid);
+                });
+            });
+            regs.push(reg); 
+
+        };
+    });
+
+    return regs;
+
+};
+
+
+let renderBoard = function(brd,unitsize,mode) {
+    let ky = brd.pubID.toString() + unitsize + (mode === 'view' ? '1' : '0') + (mode === 'completed' ? '1' : '0') ;
+    let cUrl = renderedBoards[ky];
+
+    if (!cUrl) {
+        let boardsize = brd.cols.length;
+        let board = {...brd, unitsize};
+        let dim = boardsize * unitsize + 1; 
+        board.showTotals = mode !== 'view';
+
+       if (mode === 'completed') {
+            board.clrBackGround = board.clrGreen;
+            board.lineColor = 'black';
+        } else {
+            delete board.clrBackGround;
+            delete board.lineColor;
         }
 
-    },
+        console.log('rendering : '+mode);
+        let d = grph.Drawer(board);
+        let canvas = d.drawLayout();
+        cUrl = canvas.toDataURL();
+        renderedBoards[ky] = cUrl;
+    }
+    return cUrl;
+}
 
-    getInitialState: function() {
+function loadComponent(st, props) {
+    console.log('loadComponent');
+    let strt = new Date();
+    let mode = props.mode || 'view' ;
+    let mvs = props.random ? null : mode === 'reviewSolution' ? props.initMoves : getLocalStorage(props);
+
+    let brd = {...props};
+    let sz = parseInt(brd.size)
+    let rows = [];
+    let cols = [];
+    for (let i = 1; i <= sz; ++i) {
+        rows.push(i);
+        cols.push(String.fromCharCode(64+i));
+    }
+
+    brd.cols = cols;
+    brd.rows = rows;
+    let regs = [];
+    let autoEliminate = true;
+    let layoutNo = 1;
+
+    regs = initRegions(cols,rows)
+    Object.keys(brd.regions).forEach(r => regs.push(r.split(":")) );
+    let svd = localStorage.getItem('pseudoq.settings.' + sz );
+    if (svd) brd.unitsize = parseInt(svd);
+    let svdauto = localStorage.getItem('pseudoq.settings.autoEliminate');
+    if (svdauto) autoEliminate = (svdauto === 'true');
+    let svdlno = localStorage.getItem('pseudoq.settings.layoutNo')
+    if (svdlno) layoutNo = parseInt(svdlno);
+
+    brd.clrBackGround = "White";
+    brd.clrForeGround = "Black";
+    brd.clrRed = "Red";
+    brd.clrGreen = "LightGreen";
+    brd.clrYellow = "Yellow";
+    brd.clrBlue = '#64E8E2';
+    brd.clrPurple = '#CE2DB3';
+
+    let gt = brd.lessThans || brd.equalTos;
+    brd.gameType = sz == 21 ? ( gt ? "Assassin" : "Samurai")
+                            : ( gt ? "Ninja" : "Killer");
+
+    let mdl = newModel(cols,rows);
+    if (mvs) mdl = applyMovesToModel(mdl, mvs);
+    let rslt = {...initState, ...st, ...brd, model: mdl, boardsize: rows.length, allRegions: regs, autoEliminate, layoutNo, completed: false};
+    if (mvs) {
+        if (mode.indexOf('review') >= 0) {
+            rslt.moves = constructMoves(mdl, true);
+            rslt.moveIndex = 0;
+            rslt.moveComment = st.moves[0].move.comment;
+            rslt.model = st.moves[0].model;
+        } 
+        else rslt.completed = isCompleted(mdl, brd);
+
+    }
+
+    return rslt;
+};
+
+
+const LOAD = 'psq/LOAD';
+const POSTMODEL = 'psq/POSTMODEL';
+const POSTSTATE = 'psq/POSTSTATE';
+
+export function psqReducer(state = initState, action) {
+
+    let typ = action.type;
+    if (typ === LOAD) {
+        let brd = loadComponent(state, action.props)
+        return brd;
+
+    } 
+    else if (typ === POSTMODEL) {
+        return {...state, 
+                model: action.model,
+                pickers: newPickers(),
+                selectedCells: [],
+                moveComment: '',
+                ...action.newst,
+                };
+    } 
+    else if (typ === POSTSTATE) {
+        return {...state, ...action.newst };
+    }
+    return state;
+}
+
+export let PseudoqBoard = React.createClass({ 
+
+    getInitialState() {
         return {
-            pickers: PseudoqBoard.newPickers(),
-            selectedCells: [],
-            selectedreviewCells: [],
-            mode: 'view',
-            model: undefined,
-            storedModel: undefined,
-            cvsurl: '',
-            board: undefined,
-            boardsize: 9 ,
-            timer: null,
-            autoEliminate: true,
-            autoPromote: false,
-            focusCell: undefined,
-            moveComment: '',
-            moveIndex: -1,   // currently only used in review mode
-            savedMoveCount: 0,
-            savedModel: undefined,
-            moves: [], 
-            newMoves: [],
-            solutions: [],
-            reSubmit: false,
             reSubmitTimer: null,
-            completed: false,
-            pickerPanelPos: 'top',
-            unitsize: 54,
-            lastMoveWasUndo: false,
-            layoutNo: 1,
-            colorTag: 'Transparent'
         };
     },
 
-    setModelState: function(mdl,st,cb) {
-        let cmt = this.state.moveComment;
-        let newst = {   model: mdl,
-                        pickers: [false,false,false,false,false,false,false,false,false,false],
-                        selectedCells: [],
-                        moveComment: '',
-                        lastMoveWasUndo: false
-                    };
-        if (typeof st === 'string') cmt = st; 
-        else if (typeof st === 'function') cb = st;
-        else if (st && typeof st === 'object') {
-            Object.keys(st).forEach( function(c) {
-                newst[c] = st[c];
-            });
+    setModelState(model, cmt, st) {
+        cmt = cmt || this.props.moveComment || '';
+        st = st || {}
+        model.comment = cmt;
+        let mode = this.props.mode;
+        if (mode === 'play' || mode == 'review') {
+            let board = this.props;
+            let mdl = model;
+            let mvs = {};
+            let completed = isCompleted(mdl,board);
+            mvs.version = 2.1;
+            mvs.pubDay = board.pubDay;
+            mvs.samurai = this.props.boardsize === 21;
+            mvs.greaterThan = (board.lessThans || board.equalTos ? true : false );
+            mvs.rating = board.rating;
+            mvs.pubID = board.pubID;
+            mvs.completed = completed;
+
+            if (mode === 'play') {
+                mvs.moves = constructMoves(mdl);
+                mvs.lastPlay = new Date();
+            } else if (mode === 'review') {
+                let a = this.props.moves;
+                if (a[this.props.moveIndex].move.comment === this.props.moveComment ) mvs = undefined;
+                else {
+                    a[this.props.moveIndex].move.comment = this.props.moveComment;
+                    mvs.moves = a.map( function(mv) { return mv.move; } );
+                }
+            }
+            if (mvs) {
+                let txt = JSON.stringify(mvs);
+                this.setLocalStorage(txt);
+                if (mode !== 'review') {
+                    if (this.props.reSubmit || mvs.completed) {
+                        if (!this.props.random) this.autoSubmit(mdl);
+                        st.completed = mvs.completed;
+                    }
+                }
+            }
         }
-        mdl.comment = cmt;
-        this.setState( newst, cb);
+        let act = {type: POSTMODEL, model, newst: st}
+        this.props.dispatch(act);
     },
 
-    hasSolution: function() {
-        let solns = this.state.solutions;
+    componentDidUpdate(prevProps, prevState) {
+    },
+
+    postState(newst) {
+        this.props.dispatch({type: POSTSTATE, newst});
+    },
+
+    hasSolution() {
+        let solns = this.props.solutions;
         return solns && solns.length > 0;
     },
 
-    saveComment: function() {
+    saveComment() {
         var cmt = this.refs.comment.getValue();
-        this.setState({
-            moveComment: cmt
-        });
+        this.postState({ moveComment: cmt });
     },
 
-    restart: function() {
-        let board = this.state.board;
-        let mdl = PseudoqBoard.newModel(board.cols,board.rows);
-        mdl.moveCount = this.state.model.moveCount;
+    restart() {
+        let board = this.props;
+        let mdl = newModel(board.cols,board.rows);
+        mdl.moveCount = this.props.model.moveCount;
         this.setModelState(mdl);
     },
 
-    getPickables: function() {
+    getPickables() {
         let avail = Object.create(defaultAvail);
-        let state = this.state;
-        let mdl = state.model;
-        state.selectedCells.forEach( function (id) {
+        let mdl = this.props.model;
+        this.props.selectedCells.forEach( function (id) {
             let ps = mdl[id];
             vals.forEach(function(i) {
                 if (!avail[i] && ps[i]) avail[i] = true;
@@ -511,29 +753,16 @@ let PseudoqBoard = React.createClass({
         return avail;
     },
 
-    isCompleted: function(mdl, board) {
-        board = board || this.state.board;
-        let soln = board.solution;
-        return board.cols.every( function(c) {
-            return board.rows.every( function(r) {
-                let id = c+r;
-                let ps = mdl[id];
-                let chk = soln[id];
-                return !this.isCellActive(id) || ( typeof ps !== 'object' ? ps === chk : vals.every( function (i) { return i === chk ? ps[i] : !ps[i]; }) );
-            }, this);
-        }, this);
-    },
-
-    completionPoints: function(mdl) {
-        mdl = mdl || this.state.model;
-        let board = this.state.board;
+    completionPoints(mdl) {
+        mdl = mdl || this.props.model;
+        let board = this.props
         let soln = board.solution;
         let score = 0;
         let tot = 0;
         board.cols.forEach( (c) => {
             board.rows.forEach( (r) => {
                 let id = c+r;
-                if (this.isCellActive(id)) {  
+                if (isCellActive(id)) {  
                     let ps = mdl[id];
                     let chk = soln[id];
                     tot += 8;
@@ -555,85 +784,74 @@ let PseudoqBoard = React.createClass({
 
     },
 
-    percentCompleted: function(mdl) {
-        mdl = mdl || this.state.model;
+    percentCompleted(mdl) {
+        mdl = mdl || this.props.model;
         let {points, total} = this.completionPoints(mdl);
         return Math.round((points/total) * 100);
     },
 
-    toggleCellSelect: function(cell) {
-        let mode = this.state.mode;
+    toggleCellSelect(cell) {
+        let mode = this.props.mode;
         if (mode === 'view') return;
-        let selectedCells = mode.indexOf('review') >= 0 ? this.state.selectedreviewCells : this.state.selectedCells;
+        let selectedCells = this.props.selectedCells.slice(0);
+        let pickers = [...this.props.pickers];
         let id = cell.props.cid;
         let i = selectedCells.indexOf(id);
-        if ( mode.indexOf('review') >= 0) {
-            if ( i >= 0 ) { 
-                selectedCells.splice(i,1)
-            } else {
-                selectedCells.push(id); 
-            }
-        } else {
-            if (this.state.board.size === 21) {
-                let col = id.charCodeAt(0) - 65;
-                let row = parseInt( id.slice(1) ) - 1;
-                let ppos = this.state.pickerPanelPos;
-                if (ppos === 'top') { if (row > 11) this.setPickerPanelPos('bottom'); }
-                else if (ppos === 'bottom') { if (row < 9) this.setPickerPanelPos('top'); }
-                else if (ppos === 'left') { if (col > 11) this.setPickerPanelPos('right'); }
-                else if (col < 9) { this.setPickerPanelPos('left'); }
-            }
+        if (this.props.size === 21) {
+            let col = id.charCodeAt(0) - 65;
+            let row = parseInt( id.slice(1) ) - 1;
+            let ppos = this.props.pickerPanelPos;
+            if (ppos === 'top') { if (row > 11) this.setPickerPanelPos('bottom'); }
+            else if (ppos === 'bottom') { if (row < 9) this.setPickerPanelPos('top'); }
+            else if (ppos === 'left') { if (col > 11) this.setPickerPanelPos('right'); }
+            else if (col < 9) { this.setPickerPanelPos('left'); }
+        }
 
-            if ( i >= 0 ) { 
-                selectedCells.splice(i,1)
-                let avail = this.getPickables();
-                let pkrs = this.state.pickers;
-                let fnd = false;
-                vals.forEach( function (i) {
-                    if (pkrs[i] && !avail[i]) {
-                        fnd = true;
-                        pkrs[i] = false;
-                    }
-                });
-                if (fnd) this.setState({pickers: pkrs});
-            } else { 
-                let ps = this.state.model[id];
-                if (typeof ps === 'object') {
-                    selectedCells.push(id); 
+        if ( i >= 0 ) { 
+            selectedCells.splice(i,1)
+            let avail = this.getPickables();
+            vals.forEach( function (i) {
+                if (pickers[i] && !avail[i]) {
+                    pickers[i] = false;
                 }
+            });
+        } else { 
+            let ps = this.props.model[id];
+            if (typeof ps === 'object') {
+                selectedCells.push(id); 
             }
         }
         ReactDOM.findDOMNode(cell).focus();
-        this.setState({focusCell: cell});
+        this.postState({focusCell: cell, selectedCells, pickers});
     
     },
 
-    handleKeyPress: function(cell,e) {
+    handleKeyPress(cell,e) {
         let it = e.which - 48;
         this.setCellValue(cell.props.cid,it);
     },
 
-    selectThisOne: function(it) {
-        if (this.state.selectedCells.length !== 1) return;
-        let pkrs = this.state.pickers;
+    selectThisOne(it) {
+        if (this.props.selectedCells.length !== 1) return;
+        let pkrs = this.props.pickers;
         if (pkrs[it]) return;
-        this.setCellValue(this.state.selectedCells[0],it);
+        this.setCellValue(this.props.selectedCells[0],it);
     },
 
-    setCellValue: function(cid,it) {
-        if (this.state.mode === 'view') return;
-        let selectedCells = this.state.selectedCells;
-        let newmdl = PseudoqBoard.createModel(this.state.model);
+    setCellValue(cid,it) {
+        if (this.props.mode === 'view') return;
+        let selectedCells = this.props.selectedCells;
+        let newmdl = createModel(this.props.model);
         let i = selectedCells.indexOf(cid);
         if ( it > 0 && it < 10 ) {
             let ps = newmdl[cid];
             if (typeof ps === 'object' && ps[it]) {
                 if ( i >= 0 ) selectedCells.splice(i,1);
                 newmdl[cid] = it;
-                if (this.state.autoEliminate) {
+                if (this.props.autoEliminate) {
                     let newmdl2 = this.eliminate(cid, newmdl);
                     if (newmdl2) {
-                        newmdl.comment = this.state.moveComment;
+                        newmdl.comment = this.props.moveComment;  // this is completely wrong ... evil in fact
                         this.setModelState(newmdl2, 'Elimination');
                     } else this.setModelState(newmdl);
                 } else this.setModelState(newmdl);
@@ -641,12 +859,12 @@ let PseudoqBoard = React.createClass({
         }
     },
 
-    eliminate: function(cid, prnt) {
-        let newmdl = PseudoqBoard.createModel(prnt || this.state.model);
-        let autoPromote = this.state.autoPromote;
+    eliminate(cid, prnt) {
+        let newmdl = createModel(prnt || this.props.model);
+        let autoPromote = this.props.autoPromote;
         let it = newmdl[cid];
         if ( typeof it === 'object') return;
-        let regs = this.state.regions;
+        let regs = this.props.allRegions;
         let fnd = false;
         regs.forEach( function(reg) {
             let j = reg.indexOf(cid);
@@ -678,28 +896,28 @@ let PseudoqBoard = React.createClass({
         return fnd ? newmdl : undefined;
     },
 
-    togglePicker: function(i) {
-        let pkrs = this.state.pickers;
+    togglePicker(i) {
+        let pkrs = this.props.pickers;
         pkrs[i] = !pkrs[i];
-        this.setState({pickers: pkrs});
+        this.postState({pickers: pkrs});
 
     },
 
-    toggleAllPickers: function() {
-        let pkrs = this.state.pickers;
+    toggleAllPickers() {
+        let pkrs = this.props.pickers;
         for (let i = 1; i < 10; ++i) { pkrs[i] = !pkrs[i]; };
-        this.setState({pickers: pkrs});
+        this.postState({pickers: pkrs});
     },
 
-    toggleAutoPromote: function() {
-        if (this.state.autoPromote) this.setState({autoPromote: false});
+    toggleAutoPromote() {
+        if (this.props.autoPromote) this.postState({autoPromote: false});
         else {
-            let newmdl = PseudoqBoard.createModel(this.state.model);
-            let board = this.state.board;
+            let newmdl = createModel(this.props.model);
+            let board = this.props
             board.cols.forEach( function(c) {
                 board.rows.forEach( function(r) {
                     let id = c+r;
-                    if (this.isCellActive(id)) { 
+                    if (isCellActive(id)) { 
                         let ps = newmdl[id];
                         if (typeof ps === 'object') {
                             let it = undefined;
@@ -713,49 +931,49 @@ let PseudoqBoard = React.createClass({
                     }
                 }, this);
             }, this);
-            this.setState({autoPromote: true, model: newmdl});
+            this.postState({autoPromote: true, model: newmdl});
         } 
     },
 
-    toggleAutoElim: function() {
-        let aut = !this.state.autoEliminate;
+    toggleAutoElim() {
+        let aut = !this.props.autoEliminate;
         localStorage.setItem('pseudoq.settings.autoEliminate', aut ? 'true' : 'false'); 
-        this.setState({autoEliminate: aut});
+        this.postState({autoEliminate: aut});
     },
 
-    cycleColorTagging: function() {
-        let clr = this.state.colorTag;
-        let brd = this.state.board;
+    cycleColorTagging() {
+        let clr = this.props.colorTag;
+        let brd = this.props;
         if (clr === 'Transparent') clr = brd.clrYellow;
         else if (clr === brd.clrYellow) clr = brd.clrBlue ;
         else if (clr === brd.clrBlue) clr = brd.clrPurple;
         else if (clr === brd.clrPurple) clr = 'Transparent';
         else console.log("whoops - unknown color");
-        this.setState({colorTag: clr});
+        this.postState({colorTag: clr});
     },
 
-    nakedGroup: function() {
+    nakedGroup() {
         let newmdl = this.checkNakedGroup();
         if (newmdl) {
-            let cmt = this.state.moveComment ? this.state.moveComment + " (Naked Group)" : "Naked Group";
+            let cmt = this.props.moveComment ? this.props.moveComment + " (Naked Group)" : "Naked Group";
             this.setModelState(newmdl,cmt);
         }
     },
 
-    checkNakedGroup: function(mdl) {
-        let cs = this.state.selectedCells;
-        let autoPromote = this.state.autoPromote;
+    checkNakedGroup(mdl) {
+        let cs = this.props.selectedCells;
+        let autoPromote = this.props.autoPromote;
         let l = cs.length;
         let grp = [];
         let fnd = false;
-        mdl = mdl || this.state.model;
+        mdl = mdl || this.props.model;
         if (l > 0 && l < 5) {
             vals.forEach( function(i) {
                 if ( cs.some( function(c) { return mdl[c][i]; }) ) grp.push(i); 
             });
             if (grp.length === l) {
-                let newmdl = PseudoqBoard.createModel(mdl);
-                let regs = this.state.regions;
+                let newmdl = createModel(mdl);
+                let regs = this.props.allRegions;
                 regs.forEach( function(reg) {
                     if (cs.every(function(c) { return reg.indexOf(c) >= 0; })) {
                         //console.log("region :" + JSON.stringify(reg));
@@ -787,29 +1005,29 @@ let PseudoqBoard = React.createClass({
         return undefined;
     },
 
-    applySelections: function () {
-        if (this.state.selectedCells.length === 0) {
-            if (this.state.focusCell) {
-                let newmdl = this.eliminate(this.state.focusCell.props.cid);
+    applySelections () {
+        if (this.props.selectedCells.length === 0) {
+            if (this.props.focusCell) {
+                let newmdl = this.eliminate(this.props.focusCell.props.cid);
                 if (newmdl) {
-                    this.state.model.comment = this.state.moveComment
+                    this.props.model.comment = this.props.moveComment
                     this.setModelState(newmdl, 'Elimination');
                 }
             }
         }
         else {
-            let pkrs = this.state.pickers;
+            let pkrs = this.props.pickers;
             if (pkrs.every( function(pkr) { return !pkr; })) this.nakedGroup(); 
             else this.applySels(pkrs);
         }
     },
 
-    applySels: function(pkrs) {
+    applySels(pkrs) {
         let fnd = false;
-        let mdl = this.state.model;
-        let autoPromote = this.state.autoPromote;
-        let newmdl = PseudoqBoard.createModel(mdl);
-        this.state.selectedCells.forEach( function(cid) {
+        let mdl = this.props.model;
+        let autoPromote = this.props.autoPromote;
+        let newmdl = createModel(mdl);
+        this.props.selectedCells.forEach( function(cid) {
             let ps = newmdl[cid];
             let mps = -1;
             let newps = Object.create(null);
@@ -825,10 +1043,10 @@ let PseudoqBoard = React.createClass({
             newmdl[cid] = (mps > 0 && autoPromote) ? mps : newps;
         });
         if (fnd) {
-            if (this.state.autoEliminate) {
+            if (this.props.autoEliminate) {
                 let newmdl2 = this.checkNakedGroup(newmdl);
                 if (newmdl2) {
-                    newmdl.comment = this.state.moveComment;
+                    newmdl.comment = this.props.moveComment;
                     this.setModelState(newmdl2, "Naked Group"); 
                 }
                 else this.setModelState(newmdl);
@@ -838,81 +1056,46 @@ let PseudoqBoard = React.createClass({
         else this.setModelState(mdl); 
     },
 
-    undo: function() {
-        let mdl = this.state.model;
+    undo() {
+        let mdl = this.props.model;
         let prvmdl = Object.getPrototypeOf(mdl);
         if (prvmdl) {
-            if (this.state.lastMoveWasUndo) prvmdl.moveCount = mdl.moveCount + 1;
-            this.setModelState(prvmdl,{lastMoveWasUndo: true});
+            prvmdl.moveCount = mdl.moveCount + 1;
+            this.setModelState(prvmdl);
         }
     },
 
-    constructMoves: function(mdl,storeModel) {
-        let _cons = function _cons(mdl,storeModel) {
-            let prnt = Object.getPrototypeOf(mdl);
-            if (!prnt) return [];
-            let rslt = Object.getPrototypeOf(prnt) ? _cons(prnt,storeModel) : [];
-            let pstr = function(ps) {
-                let trslt = '';
-                if (typeof ps === 'object') vals.forEach( function(i) { if (ps[i]) { trslt += i.toString(); } } );
-                else trslt = ps.toString();
-                return trslt;
-            };
-            let a = {};
-            Object.keys(mdl).forEach( function(c) {
-                if (mdl[c]) {
-                    let s = pstr(mdl[c]);
-                    if (s.length < 9) a[c] = pstr(mdl[c]);
-                }
-            });
-            a.comment = mdl.comment; 
-            a.moveCount = mdl.moveCount;
-            if (storeModel) {
-                let t = {}
-                t.model = prnt;
-                t.move = a;
-                a = t;
-            }
-            rslt.push(a);
-            return rslt;
-        }
-        let rslt = _cons(mdl,storeModel);
-        if (storeModel) rslt.push({model: mdl, move: {dummy: true, comment: '', moveCount: mdl.moveCount}});
-        return rslt;
-
-    },
-
-    play: function() {
-        this.setState({mode: 'play'});
+    play() {
+        this.postState({mode: 'play'});
     },
     
-    review: function() {
-        let mdl = this.state.model;
-        let mvs = this.constructMoves(mdl, true);
+    review() {
+        let mdl = this.props.model;
+        let mvs = constructMoves(mdl, true);
         let cmt = mvs.length === 0 ? '' : mvs[0].move.comment;
         let cnt = mdl.moveCount;
-        this.setState({mode: 'review', moves: mvs, moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: mdl}, this.reviewFirst);
+        this.postState({mode: 'review', moves: mvs, moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: mdl}, this.reviewFirst);
     },
 
-    reviewSolution: function(a) {
-        let board = this.state.board;
-        let mdl = PseudoqBoard.newModel(board.cols,board.rows);
-        mdl = this.applyMovesToModel(mdl,a);
-        let mvs = this.constructMoves(mdl, true);
+    reviewSolution(a) {
+        let board = this.props;
+        let mdl = newModel(board.cols,board.rows);
+        mdl = applyMovesToModel(mdl,a);
+        let mvs = constructMoves(mdl, true);
         let cmt = mvs.length === 0 ? '' : mvs[0].move.comment;
-        let savmdl = this.state.model;
+        let savmdl = this.props.model;
         let cnt = savmdl.moveCount;
-        this.setState({mode: 'reviewSolution', moves: mvs, moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: savmdl}, this.reviewFirst);
+        this.postState({mode: 'reviewSolution', moves: mvs, moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: savmdl}, this.reviewFirst);
     },
 
-    reviewGoto: function(i,mvs) {
+    reviewGoto(i,mvs) {
         //console.log('goto : '+i);
-        mvs = mvs || this.state.moves;
-        mvs[this.state.moveIndex].move.comment = this.state.moveComment;
+        mvs = mvs || this.props.moves;
+        mvs[this.props.moveIndex].move.comment = this.props.moveComment;
         if (i < 0 || i >= mvs.length) return;
         let mv = mvs[i];
         let sels = [];
-        let pkrs = PseudoqBoard.newPickers();
+        let pkrs = newPickers();
         let mdl = mv.model;
 
         Object.keys(mv.move).forEach( function(cid) {
@@ -937,14 +1120,15 @@ let PseudoqBoard = React.createClass({
                 };
             });
         });
-        this.setState({model: mdl, moveComment: mv.move.comment || '', selectedCells: sels, pickers: pkrs, moveIndex: i});
+        this.postState({model: mdl, moveComment: mv.move.comment || '', selectedCells: sels, pickers: pkrs, moveIndex: i});
     },
 
-    reviewLoad: function() {
-        let a = this.state.moves;
-        a[this.state.moveIndex].move.comment = this.state.moveComment;
-        let cnt = this.state.savedMoveCount;
-        a.length = this.state.moveIndex + 1;
+/*
+    reviewLoad() {
+        let a = this.props.moves;
+        a[this.props.moveIndex].move.comment = this.props.moveComment;
+        let cnt = this.props.savedMoveCount;
+        a.length = this.props.moveIndex + 1;
         let moves = a.map( function(mv) { return mv.move; } );
         moves.splice(moves.length - 1,1);
         let mdl = a[0].model;
@@ -952,61 +1136,62 @@ let PseudoqBoard = React.createClass({
         mdl.moveCount += cnt;
         this.setModelState(mdl, '', this.play );
     },
+*/
 
-    reviewReturn: function() {
-        let mdl = this.state.savedModel;
+    reviewReturn() {
+        let mdl = this.props.savedModel;
         if (mdl) {
             mdl.comment = '';
             //mdl.moveCount += 2;
-            this.setModelState(mdl, {mode: 'play', savedModel: undefined, savedMoveCount: 0});
+            this.setModelState(mdl, null, {mode: 'play', savedModel: undefined, savedMoveCount: 0});
         }
     },
 
-    reviewFirst: function() {
+    reviewFirst() {
         this.reviewGoto(0);
     },
 
-    reviewNext: function() {
-        this.reviewGoto(this.state.moveIndex + 1);
+    reviewNext() {
+        this.reviewGoto(this.props.moveIndex + 1);
     },
 
-    reviewPrev: function() {
-        this.reviewGoto(this.state.moveIndex - 1);
+    reviewPrev() {
+        this.reviewGoto(this.props.moveIndex - 1);
     },
 
-    reviewLast: function() {
-        this.reviewGoto(this.state.moves.length - 1);
+    reviewLast() {
+        this.reviewGoto(this.props.moves.length - 1);
     },
 
-    autoSubmit: function(mdl) {
-        mdl = mdl || this.state.model;
-        this._submit(this.constructMoves(mdl, true));
+    autoSubmit(mdl) {
+        mdl = mdl || this.props.model;
+        this._submit(constructMoves(mdl, true));
     },
 
-    reviewSubmit: function() {
-        this._submit(this.state.moves);
+    reviewSubmit() {
+        this._submit(this.props.moves);
     },
 
-    tick: function() {
-        if (this.isMounted && !this.state.completed) this.setState({reSubmit: true});
+    tick() {
+        if (this.isMounted && !this.props.completed) this.postState({reSubmit: true});
     },
 
-    _submit: function(a) {
-        let {board, mode} = this.state;
-        let id = board.pubID;
-        let {dayName, pos, timeOut} = this.props;
+    _submit(a) {
+        let board = this.props;
+        let {dayName, pos, timeOut, mode, pubID} = board;
 
         let xhr = new XMLHttpRequest();   
         if (timeOut) xhr.open("POST", "/challenges");
         else xhr.open("POST", "/solutions");
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        let rslt = timeOut? {timeOut: timeOut} : {puzzle: id};
+        let rslt = timeOut? {timeOut: timeOut} : {puzzle: pubID};
         rslt.lastPlay = new Date();
         if (a && a.length > 0) {
             let mvs = a.map( function(mv) { return mv.move; } );
             rslt.doc = {moves: mvs};
-            rslt.moveCount = mvs[mvs.length-1].moveCount;
-            let {points, total} = this.completionPoints();
+            let mv = a[mvs.length - 1];
+            rslt.moveCount = mv.moveCount;
+            let {points, total} = this.completionPoints(mv.model);
             rslt.completed = (points === total);
             rslt.percentCompleted = Math.round(100 * points / total);
             if (timeOut) rslt.points = points;
@@ -1022,21 +1207,21 @@ let PseudoqBoard = React.createClass({
 
         xhr.onload = () => this.receiveSolutions(xhr);
         xhr.send(txt);
-        this.setState({reSubmit: false});
+        this.postState({reSubmit: false});
     },
 
-    requestSolutions: function(a) {
+    requestSolutions(a) {
         let xhr = new XMLHttpRequest();   
         let {timeOut} = this.props;
         if (timeOut) xhr.open("GET", "/challenges/"+timeOut);
-        else xhr.open("GET", "/solutions/"+this.state.board.pubID);
+        else xhr.open("GET", "/solutions/"+this.props.pubID);
         //let that = this;
         //xhr.onload = () => { that.receiveSolutions(xhr) };
         xhr.onload = () => this.receiveSolutions(xhr);
         xhr.send();
     },
 
-    receiveSolutions: function(xhr) {
+    receiveSolutions(xhr) {
         if(xhr.status !== 200) { 
             let msg = 'failed : ' + xhr.status + " - " + xhr.responseText;
             console.log(msg);
@@ -1047,13 +1232,13 @@ let PseudoqBoard = React.createClass({
                 let {dayName, pos, timeOut} = this.props;
                 if (timeOut) {
                     let rslts = rsp.results ;
-                    this.setState({solutions: rslts});  // lazy kludge?
+                    this.postState({solutions: rslts});  // lazy kludge?
                 } else {
                     let solns = rsp.solutions.sort(utils.solutionSorter);
                     //console.log("solutions received : "+solns.length);
                     //solns.forEach(function (s) {console.log(s.lastPlay);});
                     //localStorage.setItem('pseudoq.solutions.' + dayName + '.' + pos, JSON.stringify(solns));
-                    this.setState({solutions: solns});
+                    this.postState({solutions: solns});
                 }
             } else {
                 console.log(rsp.msg);
@@ -1061,8 +1246,8 @@ let PseudoqBoard = React.createClass({
         }
     },
 
-    reviewShow: function() {
-        let a = this.state.moves;
+    reviewShow() {
+        let a = this.props.moves;
         let mvs = [];
         a.forEach( function(mv) { 
             let o = Object.create(null);
@@ -1081,52 +1266,11 @@ let PseudoqBoard = React.createClass({
         w.focus();
     },
 
-    applyMoveToModel: function(orgmdl,m) {
-        let mdl = PseudoqBoard.createModel(orgmdl);
-        Object.keys(m).forEach( function(cid) {
-            if (cid !== 'moveCount' && cid != 'comment' && cid != 'user' && mdl[cid]) {
-                let oks = m[cid];
-                if (oks.length === 1) {
-                    mdl[cid] = parseInt(oks);
-                } else {
-                    let ps = Object.create(null)
-                    vals.forEach( function(i) {
-                        let c = i.toString();
-                        ps[i] = oks.indexOf(c) >= 0;
-                    });
-                    mdl[cid] = ps;
-                }
-            }
-        }); 
-        mdl.comment = m.comment;
-        mdl.moveCount = m.moveCount;
-        mdl.user = m.user;
-        return mdl;
-    },
+    checkForErrors(mdl) {
 
-    applyMovesToModel: function (org, mvs) {
-        let mdl = org;   
-        mvs.forEach(function (m) { mdl = this.applyMoveToModel(mdl,m); }.bind(this));
-        return mdl;
-    },
-
-    isCellActive: function(id) {
-        let a = [
-          "J1", "K1", "L1", "J2", "K2", "L2", "J3", "K3", "L3",
-          "J4", "K4", "L4", "J5", "K5", "L5", "J6", "K6", "L6",
-          "J16", "K16", "L16", "J17", "K17", "L17", "J18", "K18", "L18",
-          "J19", "K19", "L19", "J20", "K20", "L20", "J21", "K21", "L21",
-          "A10", "B10", "C10", "D10", "E10", "F10", "P10", "Q10", "R10", "S10", "T10", "U10",
-          "A11", "B11", "C11", "D11", "E11", "F11", "P11", "Q11", "R11", "S11", "T11", "U11",
-          "A12", "B12", "C12", "D12", "E12", "F12", "P12", "Q12", "R12", "S12", "T12", "U12" ]
-        return a.indexOf(id) < 0;
-    },
-
-    checkForErrors: function(mdl) {
-
-        let board = this.state.board; 
+        let board = this.props; 
         let soln = board.solution;
-        mdl = mdl || this.state.model;
+        mdl = mdl || this.props.model;
 
         return board.cols.some( function(c) {
             return board.rows.some( function(r) {
@@ -1142,8 +1286,8 @@ let PseudoqBoard = React.createClass({
         });
     },
 
-    fixErrors: function() {
-        let mdl = this.state.model;
+    fixErrors() {
+        let mdl = this.props.model;
         let nmvs = mdl.moveCount + 10;
         if (this.checkForErrors()) {
             while (true) {
@@ -1155,56 +1299,7 @@ let PseudoqBoard = React.createClass({
         this.setModelState(mdl);
     },
 
-    initRegions: function(cols,rows) {
-        let regs = []
-        let sz = rows.length;
-        let origs =  sz === 9 ? [ [0,0 ] ]
-                              : [ [6,6], [0,0], [0,12], [12,0], [12,12] ]
-
-        origs.forEach( function(e) {
-            let x = e[0], y = e[1];
-            let cid;
-            let reg;
-            for (let c = 0; c < 9; c++) {
-                reg = []; 
-                for (let r = 0; r < 9; r++) {
-                    cid = cols[x+c] + rows[y+r]
-                    reg.push(cid);
-                };
-                regs.push(reg)
-            }; 
-
-            for (let r = 0; r < 9; r++) {
-                reg = []; 
-                for (let c = 0; c < 9; c++) {
-                    cid = cols[x+c] + rows[y+r]
-                    reg.push(cid);
-                };
-                regs.push(reg)
-            }; 
-
-            let a = [0,1,2];
-
-            for (let n = 0; n < 9; n++) {
-                let x0 = ( n % 3 ) * 3;
-                let y0 = Math.floor( n / 3 ) * 3;
-                reg = [];
-                a.forEach( function (i) {
-                    a.forEach( function (j) {
-                        cid = cols[x+x0+i] + rows[y+y0+j]
-                        reg.push(cid);
-                    });
-                });
-                regs.push(reg); 
-
-            };
-        });
-
-        return regs;
-
-    },
-
-    getLocalStorage: function() {
+    getLocalStorage() {
         let {dayName, pos, brdJson} = this.props;
         let pzl = dayName + "/" + pos;
         let mvs = localStorage.getItem('pseudoq.local.' + pzl);
@@ -1221,218 +1316,107 @@ let PseudoqBoard = React.createClass({
         return mvs;
     },
 
-    setLocalStorage: function(mvs) {
+    setLocalStorage(mvs) {
         let {dayName, pos} = this.props;
         let pzl = dayName + "/" + pos;
         localStorage.setItem('pseudoq.local.' + pzl, mvs);
     },
 
-    changeLayout: function() {
-        let lno = this.state.layoutNo + 1;
+    changeLayout() {
+        let lno = this.props.layoutNo + 1;
         if (lno === 5) lno = 1;
         localStorage.setItem('pseudoq.settings.layoutNo', lno.toString()); 
-        this.setState({layoutNo: lno});
+        this.postState({layoutNo: lno});
     },
 
-    setUnitSize: function(unitsz) {
-        let st = this.state;
-        let sz = st.board.cols.length;
+    setUnitSize(unitsz) {
+        let sz = this.props.cols.length;
         localStorage.setItem('pseudoq.settings.' + sz, unitsz.toString()); 
-        this.setState({unitsize: unitsz});
+        this.postState({unitsize: unitsz});
     },
 
-    enlarge: function() {
-        this.setUnitSize(this.state.unitsize + 9);
+    enlarge() {
+        this.setUnitSize(this.props.unitsize + 9);
     },
 
-    shrink: function() {
-        this.setUnitSize(this.state.unitsize - 9);
+    shrink() {
+        this.setUnitSize(this.props.unitsize - 9);
     },
 
-
-    componentWillMount: function() { this.initComponent(); },
-    componentWillReceiveProps: function() { this.initComponent(); }, 
-    initComponent: function() {  
-        //console.log('Board will receive props');
-        let brd = this.props.brdJson;
-        let strt = new Date();
-        let mode = this.props.initmode || 'view' ;
-        let mvs = this.props.random ? null : mode === 'reviewSolution' ? this.props.initMoves : this.getLocalStorage();
-
-        let sz = parseInt(brd.size)
-        let rows = [];
-        let cols = [];
-        for (let i = 1; i <= sz; ++i) {
-            rows.push(i);
-            cols.push(String.fromCharCode(64+i));
-        }
-
-        brd.cols = cols;
-        brd.rows = rows;
-        brd.unitsize = 36;
-        let regs = [];
-        let autoEliminate = true;
-        let layoutNo = 1;
-
-        if (mode === 'play' || mode.indexOf('review') >= 0) {
-            regs = this.initRegions(cols,rows)
-            Object.keys(brd.regions).forEach(r => regs.push(r.split(":")) );
-            brd.unitsize = sz == 9 ? 54 : 45;
-            let svd = localStorage.getItem('pseudoq.settings.' + sz );
-            if (svd) brd.unitsize = parseInt(svd);
-            let svdauto = localStorage.getItem('pseudoq.settings.autoEliminate');
-            if (svdauto) autoEliminate = (svdauto === 'true');
-            let svdlno = localStorage.getItem('pseudoq.settings.layoutNo')
-            if (svdlno) layoutNo = parseInt(svdlno);
-        }
-        brd.clrBackGround = "White";
-        brd.clrForeGround = "Black";
-        brd.clrRed = "Red";
-        brd.clrGreen = "LightGreen";
-        brd.clrYellow = "Yellow";
-        brd.clrBlue = '#64E8E2';
-        brd.clrPurple = '#CE2DB3';
-
-        brd.showTotals = mode !== 'view';
-        let gt = brd.lessThans || brd.equalTos;
-        brd.gameType = sz == 21 ? ( gt ? "Assassin" : "Samurai")
-                                : ( gt ? "Ninja" : "Killer");
-
-        let mdl = PseudoqBoard.newModel(cols,rows);
-        let st = {board: brd, unitsize: brd.unitsize, model: mdl, mode: mode, boardsize: rows.length, regions: regs, autoEliminate: autoEliminate, layoutNo: layoutNo, completed: false};
-        if (brd.solutions) st.solutions = brd.solutions;
-        if (mvs) {
-            mdl = this.applyMovesToModel(mdl, mvs);
-            st.model = mdl;
-            if (mode.indexOf('review') >= 0) {
-                st.moves = this.constructMoves(mdl, true);
-                st.moveIndex = 0;
-                st.moveComment = st.moves[0].move.comment;
-                st.model = st.moves[0].model;
-            } 
-            else st.completed = this.isCompleted(mdl, brd);
-
-        }
-
-        if (mode === 'play' && !st.completed ) {
-            if (this.props.random) st.timer = new oxiDate.pauseableTimer();
-            else st.reSubmitTimer = window.setInterval(this.tick, 60000);   // only submit a max of once a minute, upon next move.
-
-        }
-        this.setState(st);
+    componentWillMount() {  
+        console.log('ComponentWillMount Board');
+        this.props.dispatch( {type: LOAD, props: this.props});
     },
 
-    componentDidMount: function () {
+    componentDidMount() {
         //console.log("PseudoqBoard mounted");
-        let mode = this.state.mode;
+        let {mode,completed,random} = this.props;
         if (mode.indexOf('review') >= 0) this.reviewFirst();
-        else if (mode === 'play') this.requestSolutions();
-    },
-
-    componentWillUnmount: function(){
-        //console.log("PseudoqBoard will unmount");
-        window.clearInterval(this.state.reSubmitTimer);
-    },
-
-    getSecondsElapsed: function () {
-        let timer = this.state.timer;
-        return timer ? Math.round(timer.elapsed() / 1000) : 0;
-     },
-
-    timedOut: function () {
-        //console.log("timed out");
-        if (!this.checkForErrors()) this.autoSubmit();
-        this.setState({completed: true});
-    },
-
-    reload: function () {
-        document.location.reload(true);
-    },
-
-    setPickerPanelPos: function(pos) {
-        this.setState({pickerPanelPos: pos});
-    },
-
-    componentDidUpdate: function(prevProps, prevState) {
-        let mode = this.state.mode;
-        let board = this.state.board;
-        if (mode === 'play' || mode == 'review') {
-            let mdl = this.state.model;
-            if (mode === 'review' || this.state.storedModel !== mdl) {
-                let mvs = {};
-                mvs.version = 2.1;
-                mvs.pubDay = board.pubDay;
-                mvs.samurai = this.state.boardsize === 21;
-                mvs.greaterThan = (board.lessThans || board.equalTos ? true : false );
-                mvs.rating = board.rating;
-                mvs.pubID = board.pubID;
-
-                if (mode === 'play') {
-                    mvs.moves = this.constructMoves(mdl);
-                    mvs.completed = this.isCompleted(mdl);
-                    mvs.lastPlay = new Date();
-                } else if (mode === 'review') {
-                    let a = this.state.moves;
-                    if (a[this.state.moveIndex].move.comment === this.state.moveComment ) mvs = undefined;
-                    else {
-                        a[this.state.moveIndex].move.comment = this.state.moveComment;
-                        mvs.moves = a.map( function(mv) { return mv.move; } );
-                    }
-                }
-                if (mvs) {
-                    //let timer = this.state.timer;
-                    //if (timer) mvs.started = timer.started;
-                    let txt = JSON.stringify(mvs);
-                    this.setLocalStorage(txt);
-                    //if (mvs.completed && timer) timer.pause();
-                    if (mode !== 'review') {
-                        let st = {storedModel: mdl};
-                        if (this.state.reSubmit || (mvs.completed && !this.state.completed)) {
-                            if (!this.props.random) this.autoSubmit(mdl);
-                            st.completed = mvs.completed;
-                        }
-                        this.setState(st);
-                    }
-                }
+        else if (mode === 'play') {
+            this.requestSolutions();
+            if (!completed ) {
+                if (random) this.postState({timer: new oxiDate.pauseableTimer() });
+                else this.setState({reSubmitTimer: window.setInterval(this.tick, 60000)});   // only submit a max of once a minute, upon next move.
             }
         }
     },
 
-    render: function() {
-        let that = this;
-        let state = this.state;
-        let mode = state.mode; 
-        let board = state.board;
-        if (!board || mode === 'hide') {
-             return undefined;
+    componentWillUnmount(){
+        //console.log("PseudoqBoard will unmount");
+        window.clearInterval(this.state.reSubmitTimer);
+    },
+
+    getSecondsElapsed () {
+        let timer = this.props.timer;
+        return timer ? Math.round(timer.elapsed() / 1000) : 0;
+     },
+
+    timedOut () {
+        //console.log("timed out");
+        if (!this.checkForErrors()) this.autoSubmit();
+        this.postState({completed: true});
+    },
+
+    reload () {
+        document.location.reload(true);
+    },
+
+    setPickerPanelPos(pos) {
+        this.postState({pickerPanelPos: pos});
+    },
+
+    render() {
+        console.log("rendering board"); 
+        let board = {...this.props};
+        let {dayName, pos, mode, model, pickers, selectedCells, layoutNo, pickerPanelPos} = board;
+        if (!model || mode === 'hide') {
+             return null;
         }
-        let {dayName, pos} = this.props;
         //let mvs = this.getLocalStorage();
         //let timeElapsed = mode === 'play' ? this.getSecondsElapsed() : 0; 
+        let sz = board.cols.length;
+        let unitsize = 
+            mode === 'view' ? 36 
+            : sz === 9 ? 54 
+            : 45;
 
-        let unitsize = state.unitsize;
         board.unitsize = unitsize;
-        let dim = state.boardsize * unitsize + 1; 
+        let completed = isCompleted(model, board);
+
         board.cellSize = unitsize * (21 / 36);
         board.possSize = board.cellSize / 3;
         board.cellLeft = (board.cellSize / 6);
         board.cellTop = board.cellLeft + (unitsize / 25);
         board.cellFontSize = Math.floor( unitsize * 3 ).toString() + "%";
+
         let pss = Math.floor( board.possSize * 6 );
         if (pss < 43) pss = 43;
         board.possFontSize = pss.toString() + '%';
 
 
-        let completed = mode.indexOf('review') >= 0 ? this.isCompleted(state.model) : ( this.state.completed || this.isCompleted(state.model) );
+        let cvsurl = renderBoard(board, unitsize, completed ? 'completed' : mode);
+        let dim = (sz * unitsize) + 1; 
 
-        if (completed) {
-            board.clrBackGround = board.clrGreen;
-            board.lineColor = 'black';
-        } else {
-            delete board.clrBackGround;
-            delete board.lineColor;
-        }
-        let cvsurl = renderBoard(board, completed ? 'completed' : mode);
 
         let divStyle = {
           color: board.clrBackGround,
@@ -1462,40 +1446,34 @@ let PseudoqBoard = React.createClass({
         board.rows.forEach( r => {
             board.cols.forEach( c => {
                 let id = c+r;
-                let issel = state.selectedCells.indexOf(id) >= 0;
-                let isreviewsel = state.selectedreviewCells.indexOf(id) >= 0;
+                let issel = selectedCells && selectedCells.indexOf(id) >= 0;
                 cells.push(
                     <Cell key={id} cid={id} col={c} row={r} 
-                          active={this.isCellActive(id)} 
-                          model={state.model} 
+                          active={isCellActive(id)} 
                           board={board} 
-                          mode={mode} 
-                          pickers={state.pickers} 
                           issel={issel} 
                           solution={soln[id]}
                           completed={completed}
-                          isreviewsel={isreviewsel} 
                           handleClick={this.toggleCellSelect} 
                           setCellValue={this.setCellValue}  />
                 )
             }); 
         });
 
-        let layoutNo = this.state.layoutNo;
         let pkrpanels = [];
         let lhcol = null;
         let hpnl = null
-        let ppos = this.state.pickerPanelPos;
+        let ppos = pickerPanelPos;
 
         let th1 =  <h2>{ mode.indexOf('review') < 0 ? "Play" : "Review"}</h2>;
 
         let h1txt = this.props.timeOut ? 'Try to get as many points as you can before your time runs out. Go!'
-                                       : '"It\'s Sudoku, Jim, but not as we know it." - anon.';
+                                       : '"It\'s Sudoku, Jim, but who gives a fuck." - anon.';
 
-        let h1 = <Flex row style={{justifyContent: 'space-between', width: dim}}>
+        let h1 = ( <Flex row style={{justifyContent: 'space-between', width: dim}}>
                     <span>{ th1 }</span>
                     <span>{ h1txt }</span>
-                 </Flex>
+                 </Flex> );
 
         let h2 = (
           <Flex row style={ {flex: 'none', justifyContent: 'space-between', height: 30, width: dim, paddingTop: 10} }>
@@ -1510,7 +1488,8 @@ let PseudoqBoard = React.createClass({
             let rt = "/" + dayName + "/" + pos;
             btns.push( <LinkContainer key='play' to={rt} ><Button  style={btnStyle} >Play</Button></LinkContainer> );
             let ftr = null;
-            let l = this.state.solutions.length;
+            let solutions = this.props.solutions || [];
+            let l = solutions.length;
             if (l > 0) {
                 //console.log("solutions : "+l);
                 ftr = <div>Solutions: { l }</div>
@@ -1518,7 +1497,7 @@ let PseudoqBoard = React.createClass({
             return (
                 <div> 
                   {h2}
-                  <div>
+                  <div style={{height: dim + 20}}>
                       <div style={ {display: 'inline-block', width: dim} }>
                         <div className="brd" style={divStyle} >
                           {cells}
@@ -1540,7 +1519,7 @@ let PseudoqBoard = React.createClass({
         let goPt = '\u25B6';
         let tglSpan = <span style={ glyphSpanStyle} >{tglPt}</span>;
         let goSpan = <span style={ glyphSpanStyle } >{goPt}</span>;
-        let mvCount = state.model.moveCount;
+        let mvCount = model.moveCount;
         let tmr = null;
 
         let {points, total} = this.completionPoints();
@@ -1554,17 +1533,14 @@ let PseudoqBoard = React.createClass({
                 btns.push( <Button key='tryagain' bsSize='small' onClick={this.reload} block >Try Again</Button>);
                 btns.push( <Button key='undo' bsSize='small' onClick={this.undo} block >Undo</Button> );
             } else {
+                btns.push( <Button key='undo' bsSize='small' onClick={this.undo} block >Undo</Button> );
                 if (!completed) {
-                    btns.push( <Button key='undo' bsSize='small' onClick={this.undo} block >Undo</Button> );
                     btns.push( <CheckModal key='check' check={this.checkForErrors} fix={this.fixErrors} /> );
-                    if (localStorage.getItem('pseudoq.authprov')  && !this.props.random) {
-                        btns.push( <Button key='upload' bsSize='small' onClick={this.autoSubmit} block>Upload</Button>)
-                    }
                 }
                 btns.push( <RestartModal key='restart' restart={this.restart} /> );
                 btns.push( <Button key='review' bsSize='small' onClick={this.review} block >Review</Button> );
                 if (this.props.random) {
-                    tmr = <Flex row style={{ height: 30}}>Time: <Timer timer={this.state.timer } /></Flex>
+                    tmr = <Flex row style={{ height: 30}}>Time: <Timer timer={this.props.timer } /></Flex>
                 }
             }
             btns.push( <Button key='enlarge' bsSize='small' onClick={ this.enlarge } block >Enlarge</Button> );
@@ -1585,7 +1561,7 @@ let PseudoqBoard = React.createClass({
         }
 
         let prog =  (mode === 'play' && this.props.timeOut) ? (
-            <Progress key='progress' width={mnuStyle.width} height={200} timer={this.state.timer} 
+            <Progress key='progress' width={mnuStyle.width} height={200} timer={this.props.timer} 
                                 timeOut={this.props.timeOut} onTimeout={this.timedOut} score={points}/> 
             ) : (
                 <Flex row style={ {borderStyle: 'solid', borderWidth: 1 } } onClick={this.applySelections} >
@@ -1662,8 +1638,8 @@ let PseudoqBoard = React.createClass({
             );
         let solutionTable = 
               mode.indexOf('review') >= 0 ? null
-            : this.props.timeOut ? ( <ChallengesTable board={ this } results={ this.state.solutions } /> )         
-            : (<SolutionsTable board={ this } solutions={ this.state.solutions } /> );
+            : this.props.timeOut ? ( <ChallengesTable board={ this } results={ this.props.solutions } /> )         
+            : (<SolutionsTable board={ this } solutions={ this.props.solutions } /> );
         let commentInput = <div />;
         let rowlbls = <div />;
         let collbls = <div />;
@@ -1671,7 +1647,7 @@ let PseudoqBoard = React.createClass({
         if (mode.indexOf('review') >= 0) {
             thght += 20;
             /*
-            let selectedCells = this.state.selectedreviewCells;   
+            let selectedCells = this.props.selectedreviewCells;   
             selectedCells.sort();
             let cellstr = "[" + selectedCells.join(":") + "]";
                 <Input type="textarea" label='Marked Cells : ' value={ cellstr }  />
@@ -1686,7 +1662,7 @@ let PseudoqBoard = React.createClass({
             
             commentInput = (
                 <div style={ { width: dim-20} }>
-                    <Input type="textarea" ref="comment" label='Commentary for Move' value={ this.state.moveComment } onChange={this.saveComment} />                  
+                    <Input type="textarea" ref="comment" label='Commentary for Move' value={ this.props.moveComment } onChange={this.saveComment} />                  
                 </div> );
 
             helptext = (
@@ -1744,41 +1720,41 @@ let PseudoqBoard = React.createClass({
             //console.log("picker panel :" + ppos);
             pkrpanels.push( ppos === 'top' ? (
                 <div key='top' style={{ position: 'absolute', top: unitsize, left: (9*unitsize)+2, width: (3*unitsize) - 1, height: (5*unitsize) - 1 }}>
-                    <ColwisePickerPanel parent={ this } avail={ avail } pickers={state.pickers} />
+                    <ColwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
                 </div> ) 
             : (
                 <div key='topblank' onClick={ function () {that.setPickerPanelPos('top');} } style={{ position: 'absolute', top: 0, left: (9*unitsize)+1, width: (3*unitsize) - 1, height: (6*unitsize) - 1 }} />
             ));
             pkrpanels.push( ppos === 'left' ? (
                 <div key='left' style={{ position: 'absolute', left: unitsize, top: (9*unitsize), width: (5*unitsize) - 1, height: (3*unitsize) - 2 }}>
-                    <RowwisePickerPanel parent={ this } avail={ avail } pickers={state.pickers} />
+                    <RowwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
                 </div> )
             : (
                 <div key='leftblank' onClick={ function () {that.setPickerPanelPos('left');} } style={{ position: 'absolute', left: 0, top: (9*unitsize)+1, height: (3*unitsize) - 1, width: (6*unitsize) - 1 }} />
             ));
             pkrpanels.push( ppos === 'bottom' ? (
                 <div key='bottom' style={{ position: 'absolute', top: (unitsize * 15), left: (9*unitsize)+2, width: (3*unitsize) - 1, height: (5*unitsize) - 1 }}>
-                    <ColwisePickerPanel parent={ this } avail={ avail } pickers={state.pickers} />
+                    <ColwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
                 </div> )
             : (
                 <div key='bottomblank' onClick={ function () {that.setPickerPanelPos('bottom');} } style={{ position: 'absolute', top: (unitsize * 15), left: (9*unitsize)+1, width: (3*unitsize) - 1, height: (6*unitsize) - 1 }} />
             ));
             pkrpanels.push( ppos === 'right' ? (
                 <div key='right' style={{ position: 'absolute', left: (unitsize * 15), top: (9*unitsize), width: (5*unitsize) - 1, height: (3*unitsize) - 2 }}>
-                    <RowwisePickerPanel parent={ this } avail={ avail } pickers={state.pickers} />
+                    <RowwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
                 </div> )
             : (
                 <div key='rightblank' onClick={ function () {that.setPickerPanelPos('right');} } style={{ position: 'absolute', left: (unitsize * 15) , top: (9*unitsize)+1, width: (6*unitsize) - 1, height: (3*unitsize) - 1 }} />
             ));
         } else {
             let pnl = layoutNo === 1 ? ( <Flex column style={{alignItems: 'center'}}>
-                                                <RowwisePickerPanel key='rowwise' parent={ this } avail={ avail } pickers={state.pickers} />
+                                                <RowwisePickerPanel key='rowwise' parent={ this } avail={ avail } pickers={pickers} />
                                                </Flex> )
                         :  layoutNo === 2 ? ( <Flex column style={{alignItems: 'center'}}>
-                                                 <HorizontalPickerPanel key='horizontal' parent={ this } avail={ avail } pickers={state.pickers} />
+                                                 <HorizontalPickerPanel key='horizontal' parent={ this } avail={ avail } pickers={pickers} />
                                                </Flex> )
-                        :  layoutNo === 3 ? <div style={{margin: 'auto'}}><ColwisePickerPanel key='colwise' parent={ this } avail={ avail } pickers={state.pickers} /></div>
-                        :  layoutNo === 4 ? <VerticalPickerPanel key='vertical' parent={ this } avail={ avail } pickers={state.pickers} />
+                        :  layoutNo === 3 ? <div style={{margin: 'auto'}}><ColwisePickerPanel key='colwise' parent={ this } avail={ avail } pickers={pickers} /></div>
+                        :  layoutNo === 4 ? <VerticalPickerPanel key='vertical' parent={ this } avail={ avail } pickers={pickers} />
                         : null;
             if (layoutNo === 1 || layoutNo === 2 ) hpnl = <div style={{width: dim}}>{ pnl } </div>;
             else if (layoutNo === 4 || layoutNo === 3) {
@@ -1804,11 +1780,8 @@ let PseudoqBoard = React.createClass({
                      </Flex>
                      <Flex row auto >
                        <Flex column style={{justifyContent: 'flex-end'}} >
-                        <Flex row style={{ height: 40, backgroundColor: this.state.colorTag}} >
-                            <Input type="checkbox" style={{backgroundColor: this.state.colorTag}} checked={this.state.colorTag !== "Transparent"} onChange={this.cycleColorTagging} label="Tagging"/>
-                        </Flex>
                         <Flex row style={{ height: 40}} >
-                            <Input type="checkbox" checked={this.state.autoEliminate} onChange={this.toggleAutoElim} label="AutoEliminate"/>
+                            <Input type="checkbox" checked={this.props.autoEliminate} onChange={this.toggleAutoElim} label="AutoEliminate"/>
                         </Flex>
                         <Flex row style={{ height: 30}}>Completed: {pccomp}%</Flex>
                         { tmr }
@@ -1819,18 +1792,21 @@ let PseudoqBoard = React.createClass({
                   </div>
             );
 
+                        /*
+                        <Flex row style={{ height: 40, backgroundColor: this.props.colorTag}} >
+                            <Input type="checkbox" style={{backgroundColor: this.props.colorTag}} checked={this.props.colorTag !== "Transparent"} onChange={this.cycleColorTagging} label="Tagging"/>
+                        </Flex>
+                        */
         let midcol = (
-              <Flex column style={{ flex: 'none ' }}>
+              <div>
                 {h2}
-                <Flex row>
-                  <div style={ {display: 'inline-block', width: dim, position: 'relative'} }>
+                <Flex row style={{width: dim}}>
                     <div className="brd" style={divStyle} >
                       {cells}
                     </div>
                     { pkrpanels }
-                  </div>
                 </Flex>
-              </Flex>
+              </div>
             );
 
         return (
@@ -1848,6 +1824,7 @@ let PseudoqBoard = React.createClass({
               { solutionTable }
               { helptext }
               { this.props.children }
+
             </div>
         );
     }
@@ -1855,4 +1832,4 @@ let PseudoqBoard = React.createClass({
 });
 
 
-module.exports = PseudoqBoard;
+

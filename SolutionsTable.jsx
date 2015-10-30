@@ -18,7 +18,7 @@ var SolutionsTable = React.createClass({
         var rows = []
         var j = 0;
         let board = this.props.board;
-        let solns = this.props.solutions;
+        let solns = this.props.solutions || [];
 
         if (solns.length === 0) return null;
 

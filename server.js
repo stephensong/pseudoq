@@ -354,7 +354,7 @@ app.use(router.post('/solutions', function *() {
                 });
             })
             .error( (err) => {
-                var msg = 'Submit for ' + id + ' failed : ' + err.cause;
+                var msg = 'Submit for ' + id + ' failed : ' + err.toString();
                 console.log(msg);
                 return {ok: false, msg: msg};
             }); 

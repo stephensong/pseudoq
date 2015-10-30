@@ -21,13 +21,13 @@ var Nav = ReactBootStrap.Nav;
 
 export let About = require('PseudoqAbout.jsx');
 var PseudoqHelp = require('PseudoqHelp.jsx');
-var Board = require('PseudoqBoard.jsx');
+import {psqReducer, PseudoqBoard} from 'PseudoqBoard.jsx';
 
 import { connect } from 'react-redux';
 import { History, Link } from 'react-router';
 import { LinkContainer, IndexLinkContainer } from 'react-router-bootstrap';
 
-import { Hidato } from 'Hidato.jsx';
+import { hidatoReducer, Hidato } from 'Hidato.jsx';
 
 
 var today = oxiDate.toUTC(new Date());
@@ -54,25 +54,38 @@ var initDays = function() {
     return o;
 };
 
-var findPuzzle = function ( days, dayName, pos ) {
-    return days[dayName].boards[pos];
-};
-
-
-var loadContents = function ( o ) {
+var loadContents = function ( current, o ) {
     console.log('loadContents called');
-    let days = initDays();
     let brds = o.boards;
     let dt = today;
+    let days = {...current};
+    let diff = false;
+
+    let brdsDiffer = function(o1,o2) {
+        console.log("differ called");
+        //return false;
+        let ks1 = Object.keys(o1);
+        let ks2 = Object.keys(o2);
+        if (ks1.length != ks2.length) { diff = true; return true; }
+        return ks1.some( ky => { 
+            let b1 = o1[ky];
+            let b2 = o2[ky];
+            if (!b2 || b1.pubID !== b2.pubID) {diff = true; return true; }
+            return false;
+        });
+
+    }
 
     var i = 7;
     while (i > 0) {
         let cdt = oxiDate.toFormat(dt, 'yyyyMMdd');
         //console.log('cdt :'+cdt);
         let dy = oxiDate.toFormat(dt, "DDDD");
-        let boards = brds[cdt] || {};
-        //console.log('cdt :'+cdt+", day : "+dy+", boards : "+Object.keys(boards).length);
-        days[dy].boards = boards;
+        let boards = brds[cdt];
+        if (boards) {
+            //console.log('cdt :'+cdt+", day : "+dy+", boards : "+Object.keys(boards).length);
+            if (brdsDiffer(days[dy].boards,boards)) days[dy].boards = boards;
+        }
         dt = oxiDate.addDays(dt, -1);
         i = i - 1;
     }
@@ -84,16 +97,17 @@ var loadContents = function ( o ) {
             fnd = true;
             delete brds.k
         }
-    });  
-    days.tomorrow.boards = brds[days.tomorrow.date];
-    days.tutorial = brds.tutorial;
-    return days;
+    }); 
+    if (brdsDiffer(days.tomorrow.boards,brds[days.tomorrow.date])) days.tomorrow.boards = brds[days.tomorrow.date];
+    if (!days.tutorial) { diff = true; days.tutorial = brds.tutorial; }
+    return diff ? days : current;
 };
 
 var fetchContents = function() {
-    //console.log("fetchcontents called");
+    // should get called exactly once for each mount of the app
+    console.log("fetchcontents called");
 
-    return function (dispatch, getState) {
+    return function (dispatch) {
 
         let stg = localStorage.getItem('pseudoq.boards');
         let o = null;
@@ -125,7 +139,7 @@ var fetchContents = function() {
                 try { 
                     let t = JSON.parse(xhr.responseText);
                     localStorage.setItem('pseudoq.boards', xhr.responseText);
-                    return dispatch({type: 'loadContents', contents: t});
+                    dispatch({type: 'loadContents', contents: t});
                 } catch (e) {
                     console.log("error (parsing response?) : "+e);
                 }
@@ -135,14 +149,17 @@ var fetchContents = function() {
     }
 };
 
-export let App = React.createClass({displayName: 'App',
+export let _app = React.createClass({displayName: 'App',
 
     handleDoubleClick: function(e) {
         e.preventDefault;
     },
 
+    componentDidMount: function() { 
+        this.props.dispatch(fetchContents());
+    },
+
     render: function () {
-        //console.log('rendering app')
         let userName = localStorage.getItem('pseudoq.userName');
         let prov = localStorage.getItem('pseudoq.authprov')
         let lis = prov ? (<Link to='/logout'>Sign Out ({prov})</Link>)
@@ -182,6 +199,8 @@ export let App = React.createClass({displayName: 'App',
 */
     }
 });
+
+export let App = connect(state => state )(_app);
 
 export let Login = React.createClass({displayName: 'Login',
     /*
@@ -252,28 +271,36 @@ export let Logout = React.createClass({displayName: 'Logout',
 
 export let Challenge5min = React.createClass({displayName: 'Challenge5min',
 
-    getInitialState: function() {
+    getInitialState() {
         return {
             brdJson: null
         }
     },
 
-    componentDidMount: function() {
+    componentDidMount() {
         var xhr = new XMLHttpRequest();
-        //console.log("challenge5min puzzle requested");
+        console.log("challenge5min puzzle requested");
         xhr.open("GET", '/challenge5min');
         xhr.onload = () => {
             let json = JSON.parse(xhr.responseText);
+            console.log("challenge5min puzzle received");
             json = grph.Transformer(json).randomTransform();
-            this.setState({brdJson: json});
+            this.dispatch({type: 'psq/LOAD', props: json});
         };
         xhr.send();
     },
 
+    dispatch(act) {
+        console.log("dispatching challenge5");
+        let newst = psqReducer(this.state.brdJson, act);
+        this.setState({brdJson: newst});
+    },
+
     render: function () { 
+        console.log("rendering challenge5");
         const brdJson = this.state.brdJson;
 
-        return brdJson ? (<Board key={ 'challenge5:play' } dayName={ 'challenge5' } pos={brdJson.puzzleId}  brdJson={ brdJson } initmode={ 'play' } random={ true } timeOut={ 300 } /> )
+        return brdJson ? (<PseudoqBoard key={ 'challenge5:play' } dayName={ 'challenge5' } pos={brdJson.puzzleId}  dispatch={this.dispatch} {...brdJson } mode={ 'play' } random={ true } timeOut={ 300 } /> )
                        : null;
     },
 
@@ -302,7 +329,7 @@ export let Challenge15min = React.createClass({displayName: 'Challenge15min',
     render: function () { 
         const brdJson = this.state.brdJson;
 
-        return brdJson ? (<Board key={ 'challenge15:play' } dayName={ 'challenge15' } pos={brdJson.puzzleId}  brdJson={ brdJson } initmode={ 'play' } random={ true } timeOut={ 900 } /> )
+        return brdJson ? (<Board key={ 'challenge15:play' } dayName={ 'challenge15' } pos={brdJson.puzzleId}  {...brdJson } mode={ 'play' } random={ true } timeOut={ 900 } /> )
                        : null;
     },
 
@@ -311,21 +338,8 @@ export let Challenge15min = React.createClass({displayName: 'Challenge15min',
 
 var _hidatoApp = React.createClass({displayName: 'HidatoApp',
 
-    componentDidMount: function() {
-        var xhr = new XMLHttpRequest();
-        //console.log("hidato puzzle requested");
-        xhr.open("GET", '/hidato');
-        xhr.onload = () => {
-            let json = JSON.parse(xhr.responseText);
-            //console.log("puzzle received : "+json.pubID);
-            this.props.dispatch({type: 'loadHidatoBoard', json: json, side: 30})
-        }
-        xhr.send();
-    },
-
     render: function () { 
-        return this.props.cells ? (<Hidato key={ 'hidato:play' } dispatch={ this.props.dispatch } board={ this.props }  /> )
-                       : null;
+        return (<Hidato key={ 'hidato:play' } dayName='hidato' pos='0' dispatch={ this.props.dispatch } { ...this.props }  mode='play' /> );
     },
 })
 
@@ -338,8 +352,8 @@ var _fp = React.createClass({displayName: 'FP',
     mixins: [History],
 
     componentWillMount: function() { 
-        //console.log("mounting FP");
-        this.props.dispatch(fetchContents());
+        console.log("mounting FP");
+        //this.props.dispatch(fetchContents());
         this.initComponent(this.props); 
     },
 
@@ -386,12 +400,30 @@ var _fp = React.createClass({displayName: 'FP',
 
         items.push( <LinkContainer key="hidato" to="/hidato"><NavItem>Hidato</NavItem></LinkContainer> );
 
+        let prov = localStorage.getItem('pseudoq.authprov') ? null : (
+                       <p>You are not currently signed in to psuedoq.net.  This means that your games in progress will not
+                       be made available on other devices, and any solutions you submit will not appear on leaderboards.  
+                       You can sign-in either by <a href="/auth/facebook">Facebook</a> or <a href="/auth/twitter">Twitter</a> 
+                       </p>
+                       );
+
+        let anon = userName && userName.substring(0,10) !== 'anonymous_' ? null : (
+                      <p>You are currently using an automatically assigned user-name (aka moniker).  
+                       This only means that any solutions you submit will not be readily recognisable on leaderboards as having come from you.
+                       You can change your moniker <LinkContainer key="monikerlink" to="/changeMoniker"><a>here</a></LinkContainer>  
+                       </p>
+                       );
+
+
+
         return ( 
               <div>
                 <div className="row">
                   <div className="col-md-12">
                       <p>Welcome to PseudoQ.net.  Here we publish puzzles (mainly murderous Sudoku variants) that are playable online.
                       </p>
+                      {anon}
+                      {prov}
                   </div>
                 </div>
                 <div className="row">
@@ -410,18 +442,16 @@ var _fp = React.createClass({displayName: 'FP',
     }
 
 });
-
 export let FP = connect(state => {
-        //console.log("connect called :" + (state && state.hidato ? state.hidato.toString() : "no state") );
-        //if (!state) return null;
         return (state ? state.days : null); 
     } )(_fp);
 
 
 
+
 var _help = React.createClass({displayName: 'Help',
 
-    render: function() {
+    render() {
         return (<PseudoqHelp board={ this.props.tutorial } />);
     }
 });
@@ -430,7 +460,7 @@ export let Help = connect(state => { return  {tutorial: state.days.tutorial}; } 
 
 var _daily = React.createClass({displayName: 'Daily',
 
-    render: function() {
+    render() {
         let { dayName } = this.props.params;
         let rslt = [];
         let o = this.props[dayName];
@@ -440,19 +470,20 @@ var _daily = React.createClass({displayName: 'Daily',
         var pos = 0;
         for (var j in brds) {
             if (brds.hasOwnProperty(j)) {
-                let js = brds[j];
-                let pzl = dayName + "/" + pos;
+                let p = pos;
+                let brd = brds[j];
+                let pzl = dayName + "/" + p;
                 let _dispatch = this.props.dispatch;
                 let dispatch = function (act) {
                     act.dayName = dayName;
-                    act.pos = pos;
+                    act.pos = p;
                     return _dispatch(act);
                 }
-                if (js.gameType === 'Hidato') {
-                    rslt.push( <Hidato key={ pzl+':view' } dayName={ dayName } pos={ pos } dispatch={ dispatch } brdJson={ js } mode='view'  /> );
+                if (brd.gameType === 'Hidato') {
+                    rslt.push( <Hidato key={ pzl+':view' } dayName={ dayName } pos={ p } dispatch={ dispatch } {...brd} mode='view'  /> );
                 }
                 else {
-                    rslt.push( <Board key={ pzl+':view' } dayName={ dayName } pos={ pos } brdJson={ js } initmode='view'  /> );
+                    rslt.push( <PseudoqBoard key={ pzl+':view' } dayName={ dayName } pos={ p }  dispatch={ dispatch } {...brd} mode='view'  /> );
                 }
                 pos++;
             }
@@ -467,33 +498,30 @@ var _daily = React.createClass({displayName: 'Daily',
     }    
 });
 
-export let Daily = connect(state => state.days)(_daily);
+export let Daily = connect((state,props) => {
+    console.log(JSON.stringify(props.params));
+    return state.days; })(_daily);
 
 var _playPage = React.createClass({
 
-    componentWillMount: function() {
-        //console.log("mounting PlayPage");
-        this.props.dispatch(fetchContents());
-    },
-
-    render: function() {
+    render() {
         //console.log('rendering PlayPage');
         const { dayName, pos } = this.props.params;
-        const js = findPuzzle(this.props, dayName, pos);
+        const brd = this.props[dayName].boards[pos];
         const puzzle = dayName + "/" + pos;
 
-        if (!js) return null;
+        if (!brd) return null;
 
-        if (js.gameType === 'Hidato') {
-            let _dispatch = this.props.dispatch;
-            let dispatch = function (act) {
-                act.dayName = dayName;
-                act.pos = pos;
-                return _dispatch(act);
-            }
-            return ( <Hidato key={ puzzle+':play' } dayName={ dayName } pos={ pos } board={ js } dispatch={ dispatch }  mode='play'  /> );
+        let _dispatch = this.props.dispatch;
+        let dispatch = function (act) {
+            act.dayName = dayName;
+            act.pos = pos;
+            return _dispatch(act);
+        }
+        if (brd.gameType === 'Hidato') {
+            return ( <Hidato       key={ puzzle+':play' } dayName={ dayName } pos={ pos } {...brd} dispatch={ dispatch } mode='play' /> );
         } else {
-            return (<Board key={ puzzle+':play' } dayName={ dayName } pos={ pos}  brdJson={ js } initmode={ 'play' }/> )
+            return ( <PseudoqBoard key={ puzzle+':play' } dayName={ dayName } pos={ pos } {...brd} dispatch={ dispatch } mode='play' /> );
         }
     }
 });
@@ -566,18 +594,19 @@ export function daysReducer(st, action) {
     
     if (action.dayName) {
         let {dayName,pos} = action;
-        let brd = st[dayName][pos];
-        if (brd.gameType === 'Hidato') {
-            brd = hidatoReducer(brd, action);
-            let brds = st[dayName].slice(0);
-            brds[pos] = brd;
-            return Objectassign({}, st, {[dayName]: brds});
-        }
+        let boards = st[dayName].boards;
+        let brd = boards[pos];
+        if (brd.gameType === 'Hidato') brd = hidatoReducer(brd, action);
+        else brd = psqReducer(brd, action);
+        if (brd === boards[pos]) return st;
+        let brds = {...boards, [pos]: brd};
+        let day = {...st[dayName], boards: brds }
+        return {...st, [dayName]: day};
     }
 
     switch (action.type) {
     case 'loadContents':
-        return loadContents(action.contents);
+        return loadContents(st, action.contents);
     default:
         return st;
     };

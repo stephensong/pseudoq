@@ -68,7 +68,7 @@ let transformer = function(brd) {
     };
 
     let transform = function(f,b) {
-        var rslt = Object.create(b);
+        var rslt = {...b};
         rslt.regions = Object.create(null);
         let tr = function (r) { return transformRegion(r,f); }
         let regs = b.regions;
@@ -117,7 +117,7 @@ let transformer = function(brd) {
 
     that.randomTransform = function() {
         console.log("random transform called");
-        that.testTransforms();
+        //that.testTransforms();
         let j = Math.floor(Math.random() * 4);
         let rslt = (j === 3) ? transform(_mirror,brd)
                  : (j === 2) ? transform(_rotate,brd)

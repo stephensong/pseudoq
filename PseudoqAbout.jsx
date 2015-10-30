@@ -28,16 +28,16 @@ var AboutPage = React.createClass({
   </p>
 <p>
 The main technologies used to create this site are 
-    &nbsp;<a href='http://facebook.github.io/react' target="_blank">React</a>, 
-    &nbsp;<a href='http://getbootstrap.com' target="_blank">Bootstrap</a>, 
-    &nbsp;<a href='http://nodejs.org' target="_blank">Node</a> and 
-    &nbsp;<a href='http://koajs.com' target="_blank">Koa</a>, with 
-    &nbsp;<a href='http://webpack.github.io' target="_blank">Webpack</a> and 
-    &nbsp;<a href='http://gulpjs.com' target="_blank">Gulp</a> used to streamline the build.  
-The site is deployed on <a href='http://heroku.com' target="_blank">Heroku</a>.
+    &nbsp;<a href='http://facebook.github.io/react'>React</a>, 
+    &nbsp;<a href='http://getbootstrap.com'>Bootstrap</a>, 
+    &nbsp;<a href='http://nodejs.org'>Node</a> and 
+    &nbsp;<a href='http://koajs.com'>Koa</a>, with 
+    &nbsp;<a href='http://webpack.github.io'>Webpack</a> and 
+    &nbsp;<a href='http://gulpjs.com'>Gulp</a> used to streamline the build.  
+The site is deployed on <a href='http://heroku.com'>Heroku</a>.
 </p>
 <p>The complete source code to this site, both client and server is now available on 
-      &nbsp;<a href="https://github.com/stephensong/pseudoq" target="_blank">GitHub</a>.  
+      &nbsp;<a href="https://github.com/stephensong/pseudoq">GitHub</a>.  
   I am hoping this might provide extra motivation for me to improve, refactor, clarify and document said code.
 
 </p>
@@ -66,8 +66,8 @@ It can, of course, be changed if needs be.
    Javascript development is fraught with choices.
 </p>
 <p>
-    Fwiw, I am currently experimenting with (something like) a blog at <a href="https://www.pseudoq.net/#/blog" target="_blank">https://www.pseudoq.net/#/blog</a>. 
-    Also, (something like) a link manager (a la Delicious) can be found at <a href="https://www.pseudoq.net/#/links" target="_blank">https://www.pseudoq.net/#/links</a>. 
+    Fwiw, I am currently experimenting with (something like) a blog at <a href="https://www.pseudoq.net/#/blog">https://www.pseudoq.net/#/blog</a>. 
+    Also, (something like) a link manager (a la Delicious) can be found at <a href="https://www.pseudoq.net/#/links">https://www.pseudoq.net/#/links</a>. 
     I remain uncertain as to whether I will make these a fully-fledged part of this site, or a separate site, or even ditch them altogether.
     Only time will tell.
 

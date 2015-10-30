@@ -54,7 +54,7 @@ let initState = {
 }
 
 export function linksReducer(state = initState, action) {
-    console.log("linksReducer called");
+    //console.log("linksReducer called");
     let news = null;
     let {links, tags} = state;
     let i = 0;
@@ -223,7 +223,7 @@ let LinkEntry = React.createClass({
               <div>
                 <Flex row key={ link.id } style={{alignItems: 'center'}} >
                     <Flex col style={{flex: '0 0 auto'}}>{ expBtn }</Flex> 
-                    <Flex col style={{flex: '5 1 auto'}}><a href={ url }  target="_blank">{ url }</a></Flex>
+                    <Flex col style={{flex: '5 1 auto'}}><a href={ url } >{ url }</a></Flex>
                     <Flex col style={{flex: '0 0 auto'}}>{ tagbtns }</Flex>
                 </Flex>
                 {h}

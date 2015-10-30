@@ -1,5 +1,6 @@
+"use strict";
+
 var React = require('react');
-var objectAssign = require('object-assign');
 var autoprefix = require('auto-prefixer');
 
 const flexStyle = {
@@ -21,9 +22,10 @@ function mixProps(props) {
     divStyle.flexDirection = 'column';
   }
 
-  if (typeof props.width === 'number') {
-    divStyle.flexGrow = props.width;
-  } else if (props.width) {
+//  if (typeof props.width === 'number') {
+//    divStyle.flexGrow = props.width;
+//  } else if (props.width) {
+  if (props.width) {
     divStyle.flexBasis = 'auto';
     divStyle.flexGrow = 0;
     divStyle.flexShrink = 0;
@@ -37,8 +39,9 @@ function mixProps(props) {
     divStyle.height = props.height;
   }
 
-  let rslt = props.style ? objectAssign({}, flexStyle, divStyle, props.style)
-                         : objectAssign({}, flexStyle, divStyle);
+  let pStyle = props.style || {};
+
+  let rslt = {...flexStyle, ...divStyle, ...pStyle};
 
   if (props.auto) rslt.flex = '0 0 auto';
   
@@ -47,11 +50,11 @@ function mixProps(props) {
 }
 
 let Flex = React.createClass({displayName: 'Flex',
-  render: function() {
+  render() {
     const style = mixProps(this.props);
     return <div {...this.props} style={style}>{this.props.children}</div>;
   }
 });
 
+module.exports = Flex;
 
-module.exports = Flex
