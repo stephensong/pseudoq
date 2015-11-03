@@ -3,15 +3,10 @@ var webpack = require('webpack');
 var gulpwebpack = require('gulp-webpack');
 var gencfg = require('./genWebpackConfig');
 var manifest = require('gulp-manifest');
-//var babel = require("gulp-babel");
 
 gulp.task("release", function() {
 
-    gulp.src(['package.json','index.html'])
-        .pipe(gulp.dest('/media/sf_psq-site'));
-
-    gulp.src(['server.js','oxidate.js','timespan.js','pgsql.js', 'auth.js', 'jwt.js','utils.js','uuid.js'])
-       // .pipe(babel())
+    gulp.src(['package.json','server.js','oxidate.js','timespan.js','pgsql.js', 'auth.js', 'jwt.js','utils.js','uuid.js'])
         .pipe(gulp.dest('/media/sf_psq-site'));
 
     var cfg = gencfg("./index.js", "./pseudoq_bndl.js");

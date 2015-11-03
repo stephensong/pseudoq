@@ -77,11 +77,11 @@
 	
 	//import { IntlProvider } from 'react-intl'
 	
-	var _historyLibCreateBrowserHistory = __webpack_require__(289);
+	var _historyLibCreateBrowserHistory = __webpack_require__(288);
 	
 	var _historyLibCreateBrowserHistory2 = _interopRequireDefault(_historyLibCreateBrowserHistory);
 	
-	var _historyLibCreateHashHistory = __webpack_require__(290);
+	var _historyLibCreateHashHistory = __webpack_require__(289);
 	
 	var _historyLibCreateHashHistory2 = _interopRequireDefault(_historyLibCreateHashHistory);
 	
@@ -105,7 +105,7 @@
 	
 	window.jQuery = __webpack_require__(42);
 	
-	var main = __webpack_require__(260);var daysReducer = main.daysReducer;
+	var main = __webpack_require__(259);var daysReducer = main.daysReducer;
 	var App = main.App;
 	var About = main.About;
 	var Help = main.Help;
@@ -119,14 +119,14 @@
 	var Challenge5min = main.Challenge5min;
 	var Challenge15min = main.Challenge15min;
 	
-	var _require = __webpack_require__(256);
+	var _require = __webpack_require__(255);
 	
 	var blogReducer = _require.blogReducer;
 	var Blog = _require.Blog;
 	var BlogPost = _require.BlogPost;
 	var BlogEntry = _require.BlogEntry;
 	
-	var _require2 = __webpack_require__(259);
+	var _require2 = __webpack_require__(258);
 	
 	var linksReducer = _require2.linksReducer;
 	var Links = _require2.Links;
@@ -393,7 +393,7 @@
 
 	"use strict";
 	
-	var _Object$assign = __webpack_require__(139)["default"];
+	var _Object$assign = __webpack_require__(140)["default"];
 	
 	exports["default"] = _Object$assign || function (target) {
 	  for (var i = 1; i < arguments.length; i++) {
@@ -656,9 +656,9 @@
 
 	"use strict";
 	
-	var _Object$create = __webpack_require__(262)["default"];
+	var _Object$create = __webpack_require__(261)["default"];
 	
-	var _Object$setPrototypeOf = __webpack_require__(265)["default"];
+	var _Object$setPrototypeOf = __webpack_require__(264)["default"];
 	
 	exports["default"] = function (subClass, superClass) {
 	  if (typeof superClass !== "function" && superClass !== null) {
@@ -2928,8 +2928,8 @@
 	exports.isMember = isMember;
 	
 	function solutionSorter(a, b) {
-	    var ma = a.doc.moves;
-	    var mb = b.doc.moves;
+	    var ma = a.moves;
+	    var mb = b.moves;
 	    var acnt = ma[ma.length - 1].moveCount;
 	    var bcnt = mb[mb.length - 1].moveCount;
 	    return acnt > bcnt;
@@ -2954,9 +2954,9 @@
 	 */
 	/* eslint-disable no-proto */
 	
-	var base64 = __webpack_require__(295)
-	var ieee754 = __webpack_require__(296)
-	var isArray = __webpack_require__(297)
+	var base64 = __webpack_require__(294)
+	var ieee754 = __webpack_require__(295)
+	var isArray = __webpack_require__(296)
 	
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -7628,11 +7628,11 @@
 	
 	var _Object$keys = __webpack_require__(43)['default'];
 	
-	var _Object$defineProperty = __webpack_require__(263)['default'];
+	var _Object$defineProperty = __webpack_require__(262)['default'];
 	
 	var _interopRequireDefault = __webpack_require__(2)['default'];
 	
-	var _interopRequireWildcard = __webpack_require__(140)['default'];
+	var _interopRequireWildcard = __webpack_require__(141)['default'];
 	
 	exports.__esModule = true;
 	
@@ -8434,7 +8434,7 @@
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(286);
+	var content = __webpack_require__(285);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(249)(content, {});
@@ -10368,7 +10368,7 @@
 /* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(270), __esModule: true };
+	module.exports = { "default": __webpack_require__(269), __esModule: true };
 
 /***/ },
 /* 44 */
@@ -11467,12 +11467,11 @@
 /* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
 	var React = __webpack_require__(1);
-	var objectAssign = __webpack_require__(148);
 	var autoprefix = __webpack_require__(252);
 	
 	var flexStyle = {
@@ -11494,9 +11493,10 @@
 	    divStyle.flexDirection = 'column';
 	  }
 	
-	  if (typeof props.width === 'number') {
-	    divStyle.flexGrow = props.width;
-	  } else if (props.width) {
+	  //  if (typeof props.width === 'number') {
+	  //    divStyle.flexGrow = props.width;
+	  //  } else if (props.width) {
+	  if (props.width) {
 	    divStyle.flexBasis = 'auto';
 	    divStyle.flexGrow = 0;
 	    divStyle.flexShrink = 0;
@@ -11510,7 +11510,9 @@
 	    divStyle.height = props.height;
 	  }
 	
-	  var rslt = props.style ? objectAssign({}, flexStyle, divStyle, props.style) : objectAssign({}, flexStyle, divStyle);
+	  var pStyle = props.style || {};
+	
+	  var rslt = _extends({}, flexStyle, divStyle, pStyle);
 	
 	  if (props.auto) rslt.flex = '0 0 auto';
 	
@@ -14788,7 +14790,7 @@
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(287);
+	var content = __webpack_require__(286);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(249)(content, {});
@@ -15310,7 +15312,7 @@
 /* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var global    = __webpack_require__(279)
+	var global    = __webpack_require__(278)
 	  , core      = __webpack_require__(48)
 	  , PROTOTYPE = 'prototype';
 	var ctx = function(fn, that){
@@ -16118,7 +16120,7 @@
 	}
 	exports.isPrimitive = isPrimitive;
 	
-	exports.isBuffer = __webpack_require__(312);
+	exports.isBuffer = __webpack_require__(311);
 	
 	function objectToString(o) {
 	  return Object.prototype.toString.call(o);
@@ -16162,7 +16164,7 @@
 	 *     prototype.
 	 * @param {function} superCtor Constructor function to inherit prototype from.
 	 */
-	exports.inherits = __webpack_require__(311);
+	exports.inherits = __webpack_require__(310);
 	
 	exports._extend = function(origin, add) {
 	  // Don't do anything if add isn't an object
@@ -20027,6 +20029,9 @@
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
 	exports.hidatoReducer = hidatoReducer;
+	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+	
 	var jQuery = __webpack_require__(42);
 	
 	//require('./css/bootstrap-flatly.css');
@@ -20034,12 +20039,13 @@
 	//require('bootstrap');
 	var oxiDate = __webpack_require__(32);
 	var utils = __webpack_require__(25);
-	var Objectassign = __webpack_require__(148);
+	var Objectassign = __webpack_require__(312);
 	
 	var timeSpan = __webpack_require__(33);
 	
-	var ht = __webpack_require__(258);
+	var ht = __webpack_require__(257);
 	var React = __webpack_require__(1);
+	var ReactDOM = __webpack_require__(13);
 	var ReactBootStrap = __webpack_require__(35);
 	var Button = ReactBootStrap.Button;
 	var ButtonToolbar = ReactBootStrap.ButtonToolbar;
@@ -20047,13 +20053,15 @@
 	var ModalTrigger = ReactBootStrap.ModalTrigger;
 	var Input = ReactBootStrap.Input;
 	
+	var SolutionsTable = __webpack_require__(138);
+	
 	var _require = __webpack_require__(112);
 	
 	var LinkContainer = _require.LinkContainer;
 	
 	var Flex = __webpack_require__(55);
 	
-	var initLinks = function initLinks(dim) {
+	function initLinks(dim) {
 	    var links = {};
 	
 	    var link = function link(i, j) {
@@ -20096,14 +20104,45 @@
 	    return true;
 	};
 	
+	function setMaxMin(brd) {
+	    var vals = brd.vals;
+	    var insertVal = brd.insertVal;
+	    var direction = brd.direction;
+	
+	    var minVal = 1;
+	    while (vals[minVal]) minVal++;
+	    var maxVal = brd.size - 1;
+	    while (vals[maxVal]) maxVal--;
+	    if (insertVal >= maxVal) {
+	        insertVal = maxVal;
+	        direction = 'down';
+	    } else if (insertVal <= minVal) {
+	        insertVal = minVal;
+	        direction = 'up';
+	    }
+	    return _extends({}, brd, { direction: direction, insertVal: insertVal, minVal: minVal, maxVal: maxVal });
+	}
+	
+	var clearVal = function clearVal(brd, i) {
+	    var cells = _extends({}, brd.cells);
+	    var v = cells[i].val;
+	    cells[i] = _extends({}, cells[i]);
+	    cells[i].val = 0;
+	    cells[i].isError = false;
+	    var vals = _extends({}, brd.vals);
+	    delete vals[v];
+	    return setMaxMin(_extends({}, brd, { cells: cells, vals: vals }));
+	};
+	
 	var setVal = function setVal(brd, i, v) {
+	    if (v === 0) return clearVal(brd, i, 0);
 	    var cells = _extends({}, brd.cells);
 	    var c = _extends({}, brd.cells[i]);
 	    cells[i] = c;
 	    c.val = v;
 	    var vals = _extends({}, brd.vals);
 	    vals[v] = i;
-	    return _extends({}, brd, { cells: cells, vals: vals });
+	    return setMaxMin(_extends({}, brd, { cells: cells, vals: vals }));
 	};
 	
 	/*
@@ -20133,36 +20172,55 @@
 	};
 	*/
 	
-	var clearVal = function clearVal(brd, i) {
+	function applyMoves(brd, moves) {
 	    var cells = _extends({}, brd.cells);
-	    var v = cells[i].val;
-	    cells[i] = _extends({}, brd.cells[i]);
-	    cells[i].val = 0;
-	    cells[i].isError = false;
 	    var vals = _extends({}, brd.vals);
-	    delete vals[v];
-	    return _extends({}, brd, { cells: cells, vals: vals });
+	    moves.forEach(function (mv) {
+	        if (mv.cell) {
+	            var v = mv.val;
+	            var i = mv.cell;
+	            cells[i] = _extends({}, cells[i], { val: v });
+	            if (v > 0) vals[v] = i;
+	        }
+	    });
+	    return setMaxMin(_extends({}, brd, { cells: cells, vals: vals, moves: moves }));
 	};
 	
 	var newBoard = function newBoard(brd) {
 	    var dim = brd.dim;
+	    var cells = brd.cells;
 	    var vals = brd.vals;
+	    var links = brd.links;
+	    var size = brd.size;
 	
-	    var map = ht.hex_map(dim);
-	    var links = initLinks(dim);
-	    var cells = {};
-	    map.forEach(function (c, i) {
-	        cells[i + 1] = { id: i + 1, val: 0, hex: c, given: false, fills: {} };
-	    });
-	
-	    Object.keys(vals).forEach(function (v) {
-	        var i = vals[v];
-	        //console.log(i.toString()+", "+v);
-	        cells[i].given = true;
-	        cells[i].val = v;
-	    });
-	
-	    return _extends({}, brd, { size: map.length, cells: cells, links: links });
+	    if (cells) {
+	        (function () {
+	            var newcells = {};
+	            vals = {};
+	            Object.keys(cells).forEach(function (i) {
+	                var c = cells[i];
+	                c = _extends({}, c, { isError: false });
+	                newcells[i] = c;
+	                if (c.given) vals[c.val] = i;else c.val = 0;
+	            });
+	            cells = newcells;
+	        })();
+	    } else {
+	        var map = ht.hex_map(dim);
+	        size = map.length;
+	        links = initLinks(dim);
+	        cells = {};
+	        map.forEach(function (c, i) {
+	            cells[i + 1] = { id: i + 1, val: 0, hex: c, given: false, fills: {} };
+	        });
+	        Object.keys(vals).forEach(function (v) {
+	            var i = vals[v];
+	            //console.log(i.toString()+", "+v);
+	            cells[i].given = true;
+	            cells[i].val = v;
+	        });
+	    }
+	    return setMaxMin(_extends({}, brd, { vals: vals, size: size, cells: cells, links: links }));
 	};
 	
 	function hidato_draw(brd, side) {
@@ -20214,7 +20272,7 @@
 	        draw_hex(brd.cells[c], 'black', 'lightgray');
 	    });
 	
-	    return Objectassign({}, brd, { canvas: canvas, layout: layout, side: side, height: canvas.height, width: canvas.width });
+	    return _extends({}, brd, { url: canvas.toDataURL(), layout: layout, side: side, height: canvas.height, width: canvas.width });
 	};
 	
 	var renderedBoards = {};
@@ -20224,8 +20282,7 @@
 	
 	    if (!renderedBoards[ky]) {
 	        var hid = hidato_draw(brd, side);
-	        var cUrl = hid.canvas.toDataURL();
-	        renderedBoards[ky] = Objectassign({}, hid, { url: cUrl });
+	        renderedBoards[ky] = hid;
 	    }
 	    return renderedBoards[ky];
 	};
@@ -20233,37 +20290,29 @@
 	var hasErrors = function hasErrors(brd) {
 	    var soln = brd.soln;
 	    var vals = brd.vals;
-	    var isErr = false;
-	    Object.keys(vals).forEach(function (i) {
-	        if (!isErr) {
-	            if (soln[i] !== vals[i]) isErr = true;
-	        }
+	    return Object.keys(vals).some(function (i) {
+	        return soln[i] !== vals[i];
 	    });
-	    return isErr;
 	};
 	
-	var checkBoard = function checkBoard(brd) {
+	var isCompleted = function isCompleted(brd) {
 	    var soln = brd.soln;
 	    var vals = brd.vals;
-	    var cells = Objectassign({}, brd.cells);
+	    return !Object.keys(soln).some(function (i) {
+	        return soln[i] !== vals[i];
+	    });
+	};
+	
+	function checkBoard(brd) {
+	    var soln = brd.soln;
+	    var vals = brd.vals;
+	    var cells = _extends({}, brd.cells);
 	    Object.keys(vals).forEach(function (i) {
 	        var k = vals[i];
 	        var c = cells[k];
-	        cells[k] = Objectassign({}, c, { isError: vals[i] !== soln[i] });
+	        cells[k] = _extends({}, c, { isError: vals[i] !== soln[i] });
 	    });
-	    return Objectassign({}, brd, { cells: cells });
-	};
-	
-	var resetBoard = function resetBoard(brd) {
-	    var soln = brd.soln;
-	    var cells = {};
-	    var vals = {};
-	    Object.keys(brd.cells).forEach(function (k) {
-	        var c = brd.cells[k];
-	        cells[k] = Objectassign({}, c, { val: c.given ? c.val : 0, isError: false });
-	        if (c.given) vals[c.val] = k;
-	    });
-	    return Objectassign({}, brd, { cells: cells, vals: vals });
+	    return _extends({}, brd, { cells: cells });
 	};
 	
 	var cellFromHex = function cellFromHex(brd, h) {
@@ -20300,6 +20349,263 @@
 	    };
 	};
 	
+	function getLocalStorage(brd) {
+	    console.log("getLocalStorage called");
+	    var _brd = brd;
+	    var dayName = _brd.dayName;
+	    var pos = _brd.pos;
+	    var pubID = _brd.pubID;
+	
+	    var pzl = dayName + "/" + pos;
+	    var stg = localStorage.getItem('pseudoq.local.' + pzl);
+	    if (!stg) return brd;
+	    stg = JSON.parse(stg);
+	    if (!pubID) return stg;
+	    if (stg.pubID !== pubID) return brd;
+	    var mvs = stg.moves;
+	    if (mvs.moves) mvs = mvs.moves; // remove in 2016
+	    var bmvs = brd.moves;
+	    if (bmvs.length >= mvs.length) return brd;
+	    if (bmvs.length > 0) {
+	        brd = newBoard(brd);
+	        brd = initState(brd);
+	    }
+	    return applyMoves(brd, mvs);
+	}
+	
+	function setLocalStorage(brd, moves) {
+	    var _brd2 = brd;
+	    var dayName = _brd2.dayName;
+	    var pos = _brd2.pos;
+	
+	    var pzl = dayName + "/" + pos;
+	    if (moves) brd = _extends({}, brd, { moves: moves });
+	    localStorage.setItem('pseudoq.local.' + pzl, JSON.stringify(brd));
+	}
+	
+	var initState = function initState() {
+	    var brd = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	
+	    return _extends({}, brd, {
+	        gameType: 'Hidato',
+	        direction: 'up',
+	        prevCell: null,
+	        completed: false,
+	        moves: [],
+	        solutions: [],
+	        reSubmit: false
+	    });
+	};
+	
+	function nextInsertVal(dir, from, board) {
+	    if (!board) {
+	        console.log("whoopsie");
+	    }
+	    var vals = board.vals;
+	    var v = from;
+	    var maxVal = board.maxVal;
+	    var minVal = board.minVal;
+	    if (dir === 'up') {
+	        while (true) {
+	            ++v;
+	            if (v >= maxVal) {
+	                v = maxVal;
+	                while (vals[v] && v >= minVal) --v;
+	                maxVal = v;
+	                dir = 'down';
+	                break;
+	            } else if (!vals[v] && (vals[v + 1] || vals[v - 1])) {
+	                if (vals[v + 1] && !vals[v - 1]) dir = 'down';
+	                break;
+	            }
+	        }
+	        if (from === minVal && minVal < maxVal) minVal = v;
+	    } else {
+	        while (true) {
+	            --v;
+	            if (v <= minVal) {
+	                v = minVal;
+	                while (vals[v] && v <= maxVal) ++v;
+	                minVal = v;
+	                dir = 'up';
+	                break;
+	            } else if (!vals[v] && (vals[v + 1] || vals[v - 1])) {
+	                if (vals[v - 1] && !vals[v + 1]) dir = 'up';
+	                break;
+	            }
+	        }
+	        if (from === maxVal && minVal < maxVal) maxVal = v;
+	    }
+	    if (maxVal < minVal) v = 0;
+	    return { insertVal: v, direction: dir, minVal: minVal, maxVal: maxVal };
+	};
+	
+	function clickOnCell(brd, cell) {
+	    return function (dispatch) {
+	        var dir = brd.direction;
+	        if (cell.given) {
+	            if (brd.prevCell && brd.prevCell.id === cell.id) dir = dir === 'up' ? 'down' : 'up';
+	            var vf = nextInsertVal(dir, cell.val, brd);
+	            dispatch({ type: SETSTATE, props: _extends({}, vf, { prevCell: cell }) });
+	        } else {
+	            var reSubmit = brd.reSubmit;
+	            var l = brd.moves.length;
+	            var moveCount = (l === 0 ? 0 : brd.moves[l - 1].moveCount) + 1;
+	            var v = cell.val > 0 ? 0 : brd.insertVal;
+	            var moves = [].concat(_toConsumableArray(brd.moves), [{ cell: cell.id, val: v, insertVal: brd.insertVal, moveCount: moveCount, prv: cell.val }]);
+	            var completed = false;
+	            var newb = null;
+	            if (cell.val > 0) {
+	                newb = clearVal(brd, cell.id);
+	                newb.completed = false;
+	                newb.moves = moves;
+	                dispatch({ type: SETSTATE, props: _extends({}, newb, { prevCell: cell, reSubmit: reSubmit }) });
+	            } else {
+	                newb = setVal(brd, cell.id, brd.insertVal);
+	                newb.completed = isCompleted(newb);
+	                if (newb.completed) reSubmit = true;
+	                newb.moves = moves;
+	                var o = nextInsertVal(dir, brd.insertVal, newb);
+	                dispatch({ type: SETSTATE, props: _extends({}, newb, o, { prevCell: cell, reSubmit: reSubmit }) });
+	            }
+	            setLocalStorage(newb, moves);
+	            if (reSubmit) {
+	                submit(newb, moves, dispatch);
+	                reSubmit = false;
+	            }
+	        }
+	        //return brd;  // should not happen
+	    };
+	};
+	
+	function submit(board, moves, dispatch) {
+	    var pubID = board.pubID;
+	
+	    var xhr = new XMLHttpRequest();
+	    xhr.open("POST", "/solutions");
+	    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+	    var rslt = { puzzle: pubID, doc: { moves: moves } };
+	    rslt.lastPlay = new Date();
+	    rslt.moveCount = moves[moves.length - 1].moveCount;
+	    rslt.completed = board.completed;
+	
+	    var txt = JSON.stringify(rslt);
+	
+	    xhr.send(txt);
+	    xhr.onload = function () {
+	        return receiveSolutions(xhr, dispatch);
+	    };
+	    dispatch({ type: SETSTATE, props: { reSubmit: false } });
+	};
+	
+	function requestSolutions(pubID, dispatch) {
+	    var xhr = new XMLHttpRequest();
+	    xhr.open("GET", "/solutions/" + pubID);
+	    xhr.onload = function () {
+	        return receiveSolutions(xhr, dispatch);
+	    };
+	    xhr.send();
+	};
+	
+	function receiveSolutions(xhr, dispatch) {
+	    if (xhr.status !== 200) {
+	        var msg = 'failed : ' + xhr.status + " - " + xhr.responseText;
+	        console.log(msg);
+	    } else {
+	        var rsp = JSON.parse(xhr.responseText);
+	        if (rsp.ok) {
+	            var solns = rsp.solutions;
+	            //console.log("solutions received : "+solns.length);
+	            //solns.forEach(function (s) {console.log(s.lastPlay);});
+	            //localStorage.setItem('pseudoq.solutions.' + dayName + '.' + pos, JSON.stringify(solns));
+	            dispatch({ type: LOADSOLUTIONS, solns: solns });
+	        } else {
+	            console.log(rsp.msg);
+	        }
+	    }
+	};
+	
+	var LOADBOARD = 'hidato/LOADBOARD';
+	var LOADSOLUTIONS = 'hidato/LOADSOLUTIONS';
+	var PREVINSERTVAL = 'hidato/PREVINSERTVAL';
+	var NEXTINSERTVAL = 'hidato/NEXTINSERTVAL';
+	var CHECK = 'hidato/CHECK';
+	var UNDO = 'hidato/UNDO';
+	var RESET = 'hidato/RESET';
+	var SETSTATE = 'hidato/SETSTATE';
+	
+	function hidatoReducer(st, action) {
+	    if (!st) {
+	        return initState();
+	    }
+	    var v = st.insertVal;
+	    var dir = st.direction;
+	    var brd = null;
+	    var moves = st.moves || [];
+	    var l = moves.length;
+	    var moveCount = l == 0 ? 0 : moves[l - 1].moveCount;
+	
+	    switch (action.type) {
+	        case LOADBOARD:
+	            //console.log("loading board");
+	            var js = action.json || st;
+	            brd = newBoard(js);
+	            brd = renderBoard(brd, action.side);
+	            brd = initState(brd);
+	            brd = getLocalStorage(brd);
+	            setLocalStorage(brd);
+	            return brd;
+	
+	        case LOADSOLUTIONS:
+	            return _extends({}, st, { solutions: action.solns });
+	
+	        case PREVINSERTVAL:
+	            dir = 'down';
+	            v = nextInsertVal(dir, v, st);
+	            return _extends({}, st, v, { prevCell: null });
+	
+	        case NEXTINSERTVAL:
+	            dir = 'up';
+	            v = nextInsertVal(dir, v, st);
+	            return _extends({}, st, v, { prevCell: null });
+	
+	        case CHECK:
+	            brd = checkBoard(st);
+	            moveCount += 10;
+	            moves = [].concat(_toConsumableArray(st.moves), [{ moveCount: moveCount }]);
+	            setLocalStorage(brd, moves);
+	            return _extends({}, brd, { prevCell: null, moves: moves });
+	
+	        case UNDO:
+	            //console.log("undo called");
+	            moveCount++;
+	            var l = st.moves.length - 1;
+	            while (!st.moves[l].cell) --l;
+	            var mv = st.moves[l];
+	            var moves = st.moves.slice(0, l);
+	            brd = setVal(st, mv.cell, mv.prv);
+	            moves.push({ moveCount: moveCount });
+	            setLocalStorage(brd, moves);
+	            return _extends({}, brd, { insertVal: mv.insertVal, completed: false, moves: moves });
+	
+	        case RESET:
+	            var rslt = resetBoard(st);
+	            rslt = initState(rslt);
+	            rslt.moves = [{ moveCount: moveCount }];
+	            setLocalStorage(brd, moves);
+	            return rslt;
+	
+	        case SETSTATE:
+	            var newst = _extends({}, st, action.props);
+	            return newst;
+	
+	        default:
+	            return st;
+	    };
+	}
+	
+	;
+	
 	var Cell = React.createClass({
 	    displayName: 'Cell',
 	
@@ -20307,10 +20613,11 @@
 	        var _props = this.props;
 	        var board = _props.board;
 	        var cell = _props.cell;
+	        var completed = _props.completed;
 	
 	        var styl = cell_to_inner_rect(board, cell);
 	        styl.color = cell.isError ? 'red' : 'black';
-	        //styl.backgroundColor = 'white';
+	        styl.backgroundColor = completed ? 'green' : 'white';
 	        styl.position = 'absolute';
 	        styl.alignItems = 'center';
 	        styl.justifyContent = 'center';
@@ -20337,13 +20644,13 @@
 	        var board = _props2.board;
 	        var insertVal = _props2.insertVal;
 	
-	        if (insertVal === 0) return; // finished
-	        var node = this.getDOMNode();
+	        if (board.completed) return;
+	        var node = ReactDOM.findDOMNode(this);
 	        var rect = node.getBoundingClientRect();
 	        var x = e.clientX - rect.left;
 	        var y = e.clientY - rect.top;
 	        var cell = pixel_to_cell(board, { x: x, y: y });
-	        if (cell) dispatch({ type: 'clickOnCell', cell: cell, board: board });
+	        if (cell) dispatch(clickOnCell(board, cell));
 	    },
 	
 	    render: function render() {
@@ -20379,55 +20686,133 @@
 	var Hidato = React.createClass({
 	    displayName: 'Hidato',
 	
+	    getInitialState: function getInitialState() {
+	        return {
+	            reSubmitTimer: null
+	        };
+	    },
+	
+	    newGame: function newGame() {
+	        var _this = this;
+	
+	        var xhr = new XMLHttpRequest();
+	        //console.log("hidato puzzle requested");
+	        xhr.open("GET", '/hidato');
+	        xhr.onload = function () {
+	            var json = JSON.parse(xhr.responseText);
+	            //console.log("puzzle received : "+json.pubID);
+	            _this.props.dispatch({ type: 'hidato/LOADBOARD', json: json, side: 30 });
+	        };
+	        xhr.send();
+	    },
+	
 	    componentWillMount: function componentWillMount() {
 	        this.initComponent();
 	    },
-	    componentWillReceiveProps: function componentWillReceiveProps() {
-	        this.initComponent();
-	    },
+	    //componentWillReceiveProps() { this.initComponent(); },
 	    initComponent: function initComponent() {
+	        var board = this.props;
+	        var dayName = board.dayName;
+	        var pos = board.pos;
+	        var dispatch = board.dispatch;
+	        var mode = board.mode;
+	
+	        if (dayName === 'hidato') {
+	            var pzl = dayName + "/" + pos;
+	            var stg = localStorage.getItem('pseudoq.local.' + pzl);
+	            if (stg) stg = JSON.parse(stg);
+	            if (stg && !stg.completed) dispatch({ type: SETSTATE, props: stg });else this.newGame();
+	            return;
+	        }
+	        dispatch({ type: LOADBOARD, side: mode === 'view' ? 20 : 30, json: board });
+	    },
+	
+	    componentDidMount: function componentDidMount() {
+	        console.log("Hidato mounted");
 	        var _props4 = this.props;
-	        var board = _props4.board;
-	        var brdJson = _props4.brdJson;
+	        var mode = _props4.mode;
+	        var completed = _props4.completed;
+	        var pubID = _props4.pubID;
 	        var dispatch = _props4.dispatch;
 	
-	        if (!board) dispatch({ type: 'loadHidatoBoard', side: 20, json: brdJson });
+	        if (mode === 'play') {
+	            if (pubID) requestSolutions(pubID, dispatch);
+	            if (!completed) {
+	                this.setState({ reSubmitTimer: window.setInterval(this.tick, 60000) }); // only submit a max of once a minute, upon next move.
+	            }
+	        }
+	    },
+	
+	    componentWillUnmount: function componentWillUnmount() {
+	        //console.log("PseudoqBoard will unmount");
+	        window.clearInterval(this.state.reSubmitTimer);
+	    },
+	
+	    tick: function tick() {
+	        if (this.isMounted && !this.props.completed) this.props.dispatch({ type: SETSTATE, props: { reSubmit: true } });
 	    },
 	
 	    prevInsertVal: function prevInsertVal() {
-	        this.props.dispatch({ type: 'prevInsertVal' });
+	        this.props.dispatch({ type: PREVINSERTVAL });
 	    },
 	
 	    nextInsertVal: function nextInsertVal() {
-	        this.props.dispatch({ type: 'nextInsertVal' });
+	        this.props.dispatch({ type: NEXTINSERTVAL });
 	    },
 	
 	    undo: function undo() {
 	        //console.log("dispatch undo")
-	        this.props.dispatch({ type: 'undo' });
+	        this.props.dispatch({ type: UNDO });
 	    },
 	
-	    reload: function reload() {
-	        document.location.reload(true);
+	    newGame: function newGame() {
+	        var _this2 = this;
+	
+	        var xhr = new XMLHttpRequest();
+	        //console.log("hidato puzzle requested");
+	        xhr.open("GET", '/hidato');
+	        xhr.onload = function () {
+	            var _props5 = _this2.props;
+	            var dayName = _props5.dayName;
+	            var pos = _props5.pos;
+	            var dispatch = _props5.dispatch;
+	
+	            var pzl = dayName + "/" + pos;
+	            localStorage.removeItem('pseudoq.local.' + pzl);
+	            var json = JSON.parse(xhr.responseText);
+	            json.dayName = dayName;
+	            json.pos = pos;
+	            //console.log("puzzle received : "+json.pubID);
+	            dispatch({ type: 'hidato/LOADBOARD', json: json });
+	        };
+	        xhr.send();
 	    },
 	
 	    check: function check() {
-	        this.props.dispatch({ type: 'check' });
+	        this.props.dispatch({ type: CHECK });
 	    },
 	
 	    reset: function reset() {
-	        this.props.dispatch({ type: 'reset' });
+	        this.props.dispatch({ type: RESET });
+	    },
+	
+	    reviewSolution: function reviewSolution() {
+	        console.log("reviewSolution called");
 	    },
 	
 	    render: function render() {
-	        console.log("rendering Hidato");
-	        var _props5 = this.props;
-	        var board = _props5.board;
-	        var dispatch = _props5.dispatch;
-	        var mode = _props5.mode;
-	        var direction = board.direction;
-	        var insertVal = board.insertVal;
-	        var moves = board.moves;
+	        //console.log("rendering Hidato");
+	        var board = this.props;
+	        if (!board.cells) return null;
+	        var _board = board;
+	        var direction = _board.direction;
+	        var insertVal = _board.insertVal;
+	        var moves = _board.moves;
+	        var dispatch = _board.dispatch;
+	        var mode = _board.mode;
+	
+	        var side = mode === 'view' ? 20 : 30;
+	        if (!board.width) board = renderBoard(board, side);
 	
 	        var btnStyle = {
 	            width: '100%',
@@ -20462,10 +20847,10 @@
 	            var dayName = _props6.dayName;
 	            var pos = _props6.pos;
 	
+	            var rt = "/" + dayName + "/" + pos;
 	            rhcol = React.createElement(
 	                Flex,
 	                { column: true, style: { justifyContent: 'flex-start', flex: "0 0 130px" } },
-	                'btns.push( ',
 	                React.createElement(
 	                    LinkContainer,
 	                    { key: 'play', to: rt },
@@ -20474,8 +20859,7 @@
 	                        { style: btnStyle },
 	                        'Play'
 	                    )
-	                ),
-	                ' );'
+	                )
 	            );
 	        } else {
 	            h1 = React.createElement(
@@ -20486,7 +20870,7 @@
 	            var btns = [];
 	            btns.push(React.createElement(
 	                Button,
-	                { key: 'tryagain', bsSize: 'small', onClick: this.reload, block: true },
+	                { key: 'tryagain', bsSize: 'small', onClick: this.newGame, block: true },
 	                'New Game'
 	            ));
 	            btns.push(React.createElement(
@@ -20504,6 +20888,8 @@
 	                { key: 'reset', bsSize: 'small', onClick: this.reset, block: true },
 	                'Reset'
 	            ));
+	            var l = moves.length;
+	            var mvcnt = l === 0 ? 0 : moves[l - 1].moveCount;
 	
 	            var prog = React.createElement(
 	                Flex,
@@ -20518,11 +20904,11 @@
 	                    ),
 	                    React.createElement(
 	                        Flex,
-	                        { row: true },
+	                        { row: true, auto: true },
 	                        React.createElement(
 	                            Flex,
 	                            { column: true, style: { alignSelf: 'middle', height: 50, width: '100%', fontSize: 30 } },
-	                            moves
+	                            mvcnt
 	                        )
 	                    )
 	                )
@@ -20542,7 +20928,7 @@
 	                ),
 	                React.createElement(
 	                    Flex,
-	                    { row: true },
+	                    { row: true, auto: true },
 	                    React.createElement(
 	                        Flex,
 	                        { column: true, style: { justifyContent: 'flex-end' } },
@@ -20551,12 +20937,7 @@
 	                )
 	            );
 	        }
-	
-	        var lhcol = React.createElement(
-	            Flex,
-	            { column: true, style: { flexGrow: 0, flexShrink: 0, flexBasis: board.width } },
-	            React.createElement(Board, { board: board, dispatch: dispatch })
-	        );
+	        var lhcol = React.createElement(Board, { board: board, dispatch: dispatch });
 	
 	        var ftr = null;
 	        var helptext = null;
@@ -20581,7 +20962,7 @@
 	                    { row: true, style: { justifyContent: 'center' } },
 	                    React.createElement(
 	                        Button,
-	                        { style: { color: 'black', backgroundColor: 'white', fontSize: 30 }, onClick: this.prevInsertVal },
+	                        { style: { color: 'black', backgroundColor: 'white', fontSize: 30 }, disabled: insertVal === board.minVal, onClick: this.prevInsertVal },
 	                        '<'
 	                    ),
 	                    React.createElement(
@@ -20591,7 +20972,7 @@
 	                    ),
 	                    React.createElement(
 	                        Button,
-	                        { style: { color: 'black', backgroundColor: 'white', fontSize: 30 }, onClick: this.nextInsertVal },
+	                        { style: { color: 'black', backgroundColor: 'white', fontSize: 30 }, disabled: insertVal === board.maxVal, onClick: this.nextInsertVal },
 	                        '>'
 	                    )
 	                ),
@@ -20690,141 +21071,13 @@
 	                rhcol
 	            ),
 	            ftr,
+	            React.createElement(SolutionsTable, { board: this, solutions: this.props.solutions }),
 	            helptext
 	        );
 	    }
 	
 	});
-	
 	exports.Hidato = Hidato;
-	// reducers
-	
-	var initState = function initState(brd) {
-	    var ival = 1;
-	    if (brd) while (brd.vals[ival]) ++ival;else brd = {};
-	
-	    return _extends({}, brd, {
-	        gameType: 'Hidato',
-	        direction: 'up',
-	        prevCell: null,
-	        insertVal: ival,
-	        prevState: null,
-	        moves: 0
-	    });
-	};
-	
-	function nextInsertVal(dir, from, board) {
-	    if (!board) {
-	        console.log("whoopsie");
-	    }
-	    var vals = board.vals;
-	    var v = from;
-	    if (dir === 'up') {
-	        while (true) {
-	            ++v;
-	            if (v >= board.size) {
-	                v = board.size;
-	                while (vals[v] && v > 0) --v;
-	                dir = 'down';
-	                break;
-	            } else if (!vals[v] && (vals[v + 1] || vals[v - 1])) {
-	                if (vals[v + 1] && !vals[v - 1]) dir = 'down';
-	                break;
-	            }
-	        }
-	    } else {
-	        while (true) {
-	            --v;
-	            if (v <= 1) {
-	                v = 1;
-	                while (vals[v] && v <= board.size) ++v;
-	                dir = 'up';
-	                if (v > board.size) v = 0;
-	                break;
-	            } else if (!vals[v] && (vals[v + 1] || vals[v - 1])) {
-	                if (vals[v - 1] && !vals[v + 1]) dir = 'up';
-	                break;
-	            }
-	        }
-	    }
-	    return { insertVal: v, direction: dir };
-	};
-	
-	var clickOnCell = function clickOnCell(brd, cell) {
-	    var dir = brd.direction;
-	    if (cell.given) {
-	        if (brd.prevCell && brd.prevCell.id === cell.id) dir = dir === 'up' ? 'down' : 'up';
-	        var vf = nextInsertVal(dir, cell.val, brd);
-	        return _extends({}, brd, vf, { prevCell: cell });
-	    } else if (cell.val > 0) {
-	        var newb = clearVal(brd, cell.id);
-	        return _extends({}, newb, { insertVal: cell.val, prevCell: cell, prevState: brd, moves: brd.moves + 1 });
-	    } else {
-	        var newb = setVal(brd, cell.id, brd.insertVal);
-	        var ival = dir === 'up' ? brd.insertVal + 1 : brd.insertVal - 1;
-	        if (brd.vals[ival]) {
-	            var o = nextInsertVal(dir, ival, brd);
-	            ival = o.insertVal;
-	            dir = o.direction;
-	        }
-	        return _extends({}, newb, { insertVal: ival, direction: dir, prevCell: cell, prevState: brd, moves: brd.moves + 1 });
-	    }
-	    return brd; // should not happen
-	};
-	
-	function hidatoReducer(st, action) {
-	    if (!st) {
-	        return initState();
-	    }
-	    var v = st.insertVal;
-	    var dir = st.direction;
-	    var prv = st.prevState;
-	    var brd = null;
-	
-	    switch (action.type) {
-	        case 'loadHidatoBoard':
-	            //console.log("loading board");
-	            var js = action.json || st;
-	            brd = newBoard(js);
-	            brd = renderBoard(brd, action.side);
-	            brd = initState(brd);
-	            return brd;
-	
-	        case 'clickOnCell':
-	            return clickOnCell(st, action.cell);
-	
-	        case 'prevInsertVal':
-	            dir = 'down';
-	            v = nextInsertVal(dir, v, st);
-	            return _extends({}, st, v, { prevCell: null });
-	
-	        case 'nextInsertVal':
-	            dir = 'up';
-	            v = nextInsertVal(dir, v, st);
-	            return _extends({}, st, v, { prevCell: null });
-	
-	        case 'check':
-	            brd = checkBoard(st);
-	            return _extends({}, brd, { prevCell: null, moves: st.moves + 10 });
-	
-	        case 'undo':
-	            //console.log("undo called");
-	            if (!prv) return st;
-	            return _extends({}, prv, { moves: st.moves + 1 });
-	
-	        case 'reset':
-	            var i = 1;
-	            var rslt = resetBoard(st);
-	            rslt = initState(rslt);
-	            rslt.moves = st.moves;
-	            return rslt;
-	
-	        default:
-	            return st;
-	    };
-	}
-	
-	;
 
 /***/ },
 /* 137 */
@@ -20871,9 +21124,9 @@
 	
 	var LinkContainer = _require.LinkContainer;
 	
-	var SolutionsTable = __webpack_require__(255);
-	var ChallengesTable = __webpack_require__(257);
-	var PickerPanels = __webpack_require__(261);
+	var SolutionsTable = __webpack_require__(138);
+	var ChallengesTable = __webpack_require__(256);
+	var PickerPanels = __webpack_require__(260);
 	var HorizontalPickerPanel = PickerPanels.Horizontal;
 	var VerticalPickerPanel = PickerPanels.Vertical;
 	var ColwisePickerPanel = PickerPanels.Colwise;
@@ -21388,9 +21641,6 @@
 	    selectedCells: [],
 	    mode: 'view',
 	    model: undefined,
-	    storedModel: undefined,
-	    board: undefined,
-	    boardsize: 9,
 	    autoEliminate: true,
 	    autoPromote: false,
 	    focusCell: undefined,
@@ -21399,7 +21649,6 @@
 	    savedMoveCount: 0,
 	    savedModel: undefined,
 	    moves: [],
-	    newMoves: [],
 	    solutions: [],
 	    reSubmit: false,
 	    completed: false,
@@ -21421,9 +21670,8 @@
 	    var bmvs = props.moves;
 	    if (mvs) {
 	        mvs = JSON.parse(mvs);
-	        if (mvs.pubID !== pubID) mvs = null;else mvs = mvs.moves;
+	        if (mvs.pubID !== pubID) mvs = null;
 	    }
-	    if (bmvs) bmvs = bmvs.moves;
 	    var a = mvs && mvs.length > 0 ? mvs[mvs.length - 1].moveCount : -1;
 	    var b = bmvs && bmvs.length > 0 ? bmvs[bmvs.length - 1].moveCount : -1;
 	    if (b > a) mvs = bmvs;
@@ -21460,7 +21708,7 @@
 	function applyMovesToModel(org, mvs) {
 	    var mdl = org;
 	    mvs.forEach(function (m) {
-	        applyMoveToModel(mdl, m);
+	        mdl = applyMoveToModel(mdl, m);
 	    });
 	    return mdl;
 	};
@@ -21544,7 +21792,7 @@
 	};
 	
 	function loadComponent(st, props) {
-	    console.log('Board will receive props');
+	    console.log('loadComponent');
 	    var strt = new Date();
 	    var mode = props.mode || 'view';
 	    var mvs = props.random ? null : mode === 'reviewSolution' ? props.initMoves : getLocalStorage(props);
@@ -21587,10 +21835,9 @@
 	    brd.gameType = sz == 21 ? gt ? "Assassin" : "Samurai" : gt ? "Ninja" : "Killer";
 	
 	    var mdl = newModel(cols, rows);
+	    if (mvs) mdl = applyMovesToModel(mdl, mvs);
 	    var rslt = _extends({}, initState, st, brd, { model: mdl, boardsize: rows.length, allRegions: regs, autoEliminate: autoEliminate, layoutNo: layoutNo, completed: false });
 	    if (mvs) {
-	        mdl = applyMovesToModel(mdl, mvs);
-	        rslt.model = mdl;
 	        if (mode.indexOf('review') >= 0) {
 	            rslt.moves = constructMoves(mdl, true);
 	            rslt.moveIndex = 0;
@@ -21611,7 +21858,8 @@
 	
 	    var typ = action.type;
 	    if (typ === LOAD) {
-	        return loadComponent(state, action.props);
+	        var brd = loadComponent(state, action.props);
+	        return brd;
 	    } else if (typ === POSTMODEL) {
 	        return _extends({}, state, {
 	            model: action.model,
@@ -21638,9 +21886,48 @@
 	        cmt = cmt || this.props.moveComment || '';
 	        st = st || {};
 	        model.comment = cmt;
+	        var mode = this.props.mode;
+	        if (mode === 'play' || mode == 'review') {
+	            var board = this.props;
+	            var mdl = model;
+	            var mvs = {};
+	            var completed = isCompleted(mdl, board);
+	            mvs.version = 2.1;
+	            mvs.pubDay = board.pubDay;
+	            mvs.samurai = this.props.boardsize === 21;
+	            mvs.greaterThan = board.lessThans || board.equalTos ? true : false;
+	            mvs.rating = board.rating;
+	            mvs.pubID = board.pubID;
+	            mvs.completed = completed;
+	
+	            if (mode === 'play') {
+	                mvs.moves = constructMoves(mdl);
+	                mvs.lastPlay = new Date();
+	            } else if (mode === 'review') {
+	                var a = this.props.moves;
+	                if (a[this.props.moveIndex].move.comment === this.props.moveComment) mvs = undefined;else {
+	                    a[this.props.moveIndex].move.comment = this.props.moveComment;
+	                    mvs.moves = a.map(function (mv) {
+	                        return mv.move;
+	                    });
+	                }
+	            }
+	            if (mvs) {
+	                var txt = JSON.stringify(mvs);
+	                this.setLocalStorage(txt);
+	                if (mode !== 'review') {
+	                    if (this.props.reSubmit || mvs.completed) {
+	                        if (!this.props.random) this.autoSubmit(mdl);
+	                        st.completed = mvs.completed;
+	                    }
+	                }
+	            }
+	        }
 	        var act = { type: POSTMODEL, model: model, newst: st };
 	        this.props.dispatch(act);
 	    },
+	
+	    componentDidUpdate: function componentDidUpdate(prevProps, prevState) {},
 	
 	    postState: function postState(newst) {
 	        this.props.dispatch({ type: POSTSTATE, newst: newst });
@@ -22079,7 +22366,7 @@
 	    },
 	
 	    /*
-	        reviewLoad: function() {
+	        reviewLoad() {
 	            let a = this.props.moves;
 	            a[this.props.moveIndex].move.comment = this.props.moveComment;
 	            let cnt = this.props.savedMoveCount;
@@ -22134,29 +22421,27 @@
 	    _submit: function _submit(a) {
 	        var _this4 = this;
 	
-	        var _state = this.state;
-	        var board = _state.board;
-	        var mode = _state.mode;
-	
-	        var id = board.pubID;
-	        var _props = this.props;
-	        var dayName = _props.dayName;
-	        var pos = _props.pos;
-	        var timeOut = _props.timeOut;
+	        var board = this.props;
+	        var dayName = board.dayName;
+	        var pos = board.pos;
+	        var timeOut = board.timeOut;
+	        var mode = board.mode;
+	        var pubID = board.pubID;
 	
 	        var xhr = new XMLHttpRequest();
 	        if (timeOut) xhr.open("POST", "/challenges");else xhr.open("POST", "/solutions");
 	        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-	        var rslt = timeOut ? { timeOut: timeOut } : { puzzle: id };
+	        var rslt = timeOut ? { timeOut: timeOut } : { puzzle: pubID };
 	        rslt.lastPlay = new Date();
 	        if (a && a.length > 0) {
 	            var mvs = a.map(function (mv) {
 	                return mv.move;
 	            });
-	            rslt.doc = { moves: mvs };
-	            rslt.moveCount = mvs[mvs.length - 1].moveCount;
+	            rslt.moves = mvs;
+	            var mv = a[mvs.length - 1];
+	            rslt.moveCount = mv.moveCount;
 	
-	            var _completionPoints2 = this.completionPoints();
+	            var _completionPoints2 = this.completionPoints(mv.model);
 	
 	            var points = _completionPoints2.points;
 	            var total = _completionPoints2.total;
@@ -22165,7 +22450,7 @@
 	            rslt.percentCompleted = Math.round(100 * points / total);
 	            if (timeOut) rslt.points = points;
 	        } else {
-	            rslt.doc = { moves: [] };
+	            rslt.moves = [];
 	            rslt.moveCount = 0;
 	            rslt.percentCompleted = 0;
 	            //rslt.secondsElapsed = 0;
@@ -22203,10 +22488,10 @@
 	        } else {
 	            var rsp = JSON.parse(xhr.responseText);
 	            if (rsp.ok) {
-	                var _props2 = this.props;
-	                var dayName = _props2.dayName;
-	                var pos = _props2.pos;
-	                var timeOut = _props2.timeOut;
+	                var _props = this.props;
+	                var dayName = _props.dayName;
+	                var pos = _props.pos;
+	                var timeOut = _props.timeOut;
 	
 	                if (timeOut) {
 	                    var rslts = rsp.results;
@@ -22278,19 +22563,19 @@
 	    },
 	
 	    getLocalStorage: function getLocalStorage() {
-	        var _props3 = this.props;
-	        var dayName = _props3.dayName;
-	        var pos = _props3.pos;
-	        var brdJson = _props3.brdJson;
+	        var _props2 = this.props;
+	        var dayName = _props2.dayName;
+	        var pos = _props2.pos;
+	        var brdJson = _props2.brdJson;
 	
 	        var pzl = dayName + "/" + pos;
 	        var mvs = localStorage.getItem('pseudoq.local.' + pzl);
 	        var bmvs = brdJson.moves;
 	        if (mvs) {
 	            mvs = JSON.parse(mvs);
-	            if (mvs.pubID !== brdJson.pubID) mvs = null;else mvs = mvs.moves;
+	            if (mvs.moves) mvs = mvs.moves; // transitional : remove in 2016
+	            if (mvs.pubID !== brdJson.pubID) mvs = null;
 	        }
-	        if (bmvs) bmvs = bmvs.moves;
 	        var a = mvs && mvs.length > 0 ? mvs[mvs.length - 1].moveCount : -1;
 	        var b = bmvs && bmvs.length > 0 ? bmvs[bmvs.length - 1].moveCount : -1;
 	        if (b > a) mvs = bmvs;
@@ -22298,9 +22583,9 @@
 	    },
 	
 	    setLocalStorage: function setLocalStorage(mvs) {
-	        var _props4 = this.props;
-	        var dayName = _props4.dayName;
-	        var pos = _props4.pos;
+	        var _props3 = this.props;
+	        var dayName = _props3.dayName;
+	        var pos = _props3.pos;
 	
 	        var pzl = dayName + "/" + pos;
 	        localStorage.setItem('pseudoq.local.' + pzl, mvs);
@@ -22328,23 +22613,16 @@
 	    },
 	
 	    componentWillMount: function componentWillMount() {
-	        this.initComponent(this.props);
-	    },
-	    //componentWillReceiveProps: function(nextProps) {
-	    //    console.log("will receive props : "+JSON.stringify(nextProps));
-	    //    //this.initComponent(nextProps);
-	    //},
-	    initComponent: function initComponent(props) {
-	        //console.log('Board will receive props');
-	        this.props.dispatch({ type: LOAD, props: props });
+	        console.log('ComponentWillMount Board');
+	        this.props.dispatch({ type: LOAD, props: this.props });
 	    },
 	
 	    componentDidMount: function componentDidMount() {
 	        //console.log("PseudoqBoard mounted");
-	        var _props5 = this.props;
-	        var mode = _props5.mode;
-	        var completed = _props5.completed;
-	        var random = _props5.random;
+	        var _props4 = this.props;
+	        var mode = _props4.mode;
+	        var completed = _props4.completed;
+	        var random = _props4.random;
 	
 	        if (mode.indexOf('review') >= 0) this.reviewFirst();else if (mode === 'play') {
 	            this.requestSolutions();
@@ -22378,52 +22656,6 @@
 	        this.postState({ pickerPanelPos: pos });
 	    },
 	
-	    componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
-	        var mode = this.props.mode;
-	        var board = this.props;
-	        if (mode === 'play' || mode == 'review') {
-	            var mdl = this.props.model;
-	            if (mode === 'review' || this.props.storedModel !== mdl) {
-	                var mvs = {};
-	                mvs.version = 2.1;
-	                mvs.pubDay = board.pubDay;
-	                mvs.samurai = this.props.boardsize === 21;
-	                mvs.greaterThan = board.lessThans || board.equalTos ? true : false;
-	                mvs.rating = board.rating;
-	                mvs.pubID = board.pubID;
-	
-	                if (mode === 'play') {
-	                    mvs.moves = constructMoves(mdl);
-	                    mvs.completed = isCompleted(mdl, board);
-	                    mvs.lastPlay = new Date();
-	                } else if (mode === 'review') {
-	                    var a = this.props.moves;
-	                    if (a[this.props.moveIndex].move.comment === this.props.moveComment) mvs = undefined;else {
-	                        a[this.props.moveIndex].move.comment = this.props.moveComment;
-	                        mvs.moves = a.map(function (mv) {
-	                            return mv.move;
-	                        });
-	                    }
-	                }
-	                if (mvs) {
-	                    //let timer = this.props.timer;
-	                    //if (timer) mvs.started = timer.started;
-	                    var txt = JSON.stringify(mvs);
-	                    this.setLocalStorage(txt);
-	                    //if (mvs.completed && timer) timer.pause();
-	                    if (mode !== 'review') {
-	                        var st = { storedModel: mdl };
-	                        if (this.props.reSubmit || mvs.completed && !this.props.completed) {
-	                            if (!this.props.random) this.autoSubmit(mdl);
-	                            st.completed = mvs.completed;
-	                        }
-	                        this.postState(st);
-	                    }
-	                }
-	            }
-	        }
-	    },
-	
 	    render: function render() {
 	        var _this6 = this;
 	
@@ -22446,6 +22678,7 @@
 	        var sz = board.cols.length;
 	        var unitsize = mode === 'view' ? 36 : sz === 9 ? 54 : 45;
 	
+	        board.unitsize = unitsize;
 	        var completed = isCompleted(model, board);
 	
 	        board.cellSize = unitsize * (21 / 36);
@@ -22512,7 +22745,7 @@
 	            mode.indexOf('review') < 0 ? "Play" : "Review"
 	        );
 	
-	        var h1txt = this.props.timeOut ? 'Try to get as many points as you can before your time runs out. Go!' : '"It\'s Sudoku, Jim, but not as we know it." - anon.';
+	        var h1txt = this.props.timeOut ? 'Try to get as many points as you can before your time runs out. Go!' : '"It\'s Sudoku, Jim, but who gives a fuck." - anon.';
 	
 	        var h1 = React.createElement(
 	            Flex,
@@ -22575,7 +22808,7 @@
 	                h2,
 	                React.createElement(
 	                    'div',
-	                    null,
+	                    { style: { height: dim + 20 } },
 	                    React.createElement(
 	                        'div',
 	                        { style: { display: 'inline-block', width: dim } },
@@ -23097,12 +23330,12 @@
 	        </Flex>
 	        */
 	        var midcol = React.createElement(
-	            Flex,
-	            { column: true, style: { flex: 'none ' } },
+	            'div',
+	            null,
 	            h2,
 	            React.createElement(
 	                Flex,
-	                { row: true, style: { display: 'table-cell', width: dim * 2 } },
+	                { row: true, style: { width: dim } },
 	                React.createElement(
 	                    'div',
 	                    { className: 'brd', style: divStyle },
@@ -23114,7 +23347,7 @@
 	
 	        return React.createElement(
 	            'div',
-	            { style: { height: 200 }, className: 'brddiv' },
+	            null,
 	            h1,
 	            React.createElement(
 	                Flex,
@@ -23141,6 +23374,138 @@
 /* 138 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+	
+	__webpack_require__(41);
+	__webpack_require__(31);
+	
+	var React = __webpack_require__(1);
+	var ReactBootStrap = __webpack_require__(35);
+	var oxidate = __webpack_require__(32);
+	var timeSpan = __webpack_require__(33);
+	var utils = __webpack_require__(25);
+	var Button = ReactBootStrap.Button;
+	
+	var Table = ReactBootStrap.Table;
+	
+	var SolutionsTable = React.createClass({
+	  displayName: 'SolutionsTable',
+	
+	  render: function render() {
+	    var rows = [];
+	    var j = 0;
+	    var board = this.props.board;
+	    var solns = this.props.solutions || [];
+	
+	    if (solns.length === 0) return null;
+	
+	    solns.forEach(function (soln) {
+	      var mvs = soln.moves;
+	      var lp = soln.lastPlay;
+	      var dt = oxidate.parse(lp);
+	      var lastplay = oxidate.toFormat(dt, "DDDD, MMMM D @ HH:MI");
+	      //console.log(lp + " : " + lastplay);
+	      var compl = soln.completed ? "yes" : "no";
+	      if (compl === "no" && soln.percentCompleted) {
+	        compl = soln.percentCompleted.toString() + "%";
+	      }
+	      var cnt = mvs[mvs.length - 1].moveCount;
+	      var reviewSolution = function reviewSolution() {
+	        board.reviewSolution(mvs);
+	      };
+	
+	      //var elapsed = '';
+	      //if (soln.secondsElapsed) elapsed = timeSpan.FromSeconds(soln.secondsElapsed).toString();
+	      //         <td>{ elapsed }</td>
+	      //      <th>Time Taken</th>
+	
+	      ++j;
+	      rows.push(React.createElement(
+	        'tr',
+	        { key: soln.solnId },
+	        React.createElement(
+	          'td',
+	          null,
+	          React.createElement(
+	            Button,
+	            { onClick: reviewSolution },
+	            j
+	          )
+	        ),
+	        React.createElement(
+	          'td',
+	          null,
+	          soln.userName
+	        ),
+	        React.createElement(
+	          'td',
+	          null,
+	          lastplay
+	        ),
+	        React.createElement(
+	          'td',
+	          null,
+	          cnt
+	        )
+	      ));
+	    });
+	
+	    return React.createElement(
+	      'div',
+	      null,
+	      React.createElement(
+	        'h2',
+	        null,
+	        'Leaderboard : '
+	      ),
+	      React.createElement(
+	        Table,
+	        { striped: true, bordered: true, condensed: true, hover: true },
+	        React.createElement(
+	          'thead',
+	          null,
+	          React.createElement(
+	            'tr',
+	            null,
+	            React.createElement(
+	              'th',
+	              null,
+	              '#'
+	            ),
+	            React.createElement(
+	              'th',
+	              null,
+	              'Player'
+	            ),
+	            React.createElement(
+	              'th',
+	              null,
+	              'At'
+	            ),
+	            React.createElement(
+	              'th',
+	              null,
+	              '# Moves'
+	            )
+	          )
+	        ),
+	        React.createElement(
+	          'tbody',
+	          null,
+	          rows
+	        )
+	      )
+	    );
+	  }
+	
+	});
+	
+	module.exports = SolutionsTable;
+
+/***/ },
+/* 139 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
 	
 	Object.defineProperty(exports, '__esModule', {
@@ -23148,7 +23513,7 @@
 	});
 	exports.generate = generate;
 	exports.validate = validate;
-	var crypto = __webpack_require__(300);
+	var crypto = __webpack_require__(299);
 	
 	var uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 	
@@ -23169,13 +23534,13 @@
 	}
 
 /***/ },
-/* 139 */
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(266), __esModule: true };
+	module.exports = { "default": __webpack_require__(265), __esModule: true };
 
 /***/ },
-/* 140 */
+/* 141 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -23200,7 +23565,7 @@
 	exports.__esModule = true;
 
 /***/ },
-/* 141 */
+/* 142 */
 /***/ function(module, exports) {
 
 	module.exports = function(exec){
@@ -23212,7 +23577,7 @@
 	};
 
 /***/ },
-/* 142 */
+/* 143 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// most Object methods by ES6 should accept primitives
@@ -23221,21 +23586,21 @@
 	    , fn   = (__webpack_require__(48).Object || {})[KEY] || Object[KEY]
 	    , exp  = {};
 	  exp[KEY] = exec(fn);
-	  $def($def.S + $def.F * __webpack_require__(141)(function(){ fn(1); }), 'Object', exp);
+	  $def($def.S + $def.F * __webpack_require__(142)(function(){ fn(1); }), 'Object', exp);
 	};
 
 /***/ },
-/* 143 */
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 7.1.13 ToObject(argument)
-	var defined = __webpack_require__(277);
+	var defined = __webpack_require__(276);
 	module.exports = function(it){
 	  return Object(defined(it));
 	};
 
 /***/ },
-/* 144 */
+/* 145 */
 /***/ function(module, exports) {
 
 	/*
@@ -23291,7 +23656,7 @@
 
 
 /***/ },
-/* 145 */
+/* 146 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23324,7 +23689,7 @@
 	}
 
 /***/ },
-/* 146 */
+/* 147 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -23343,7 +23708,7 @@
 	
 	var _DOMUtils = __webpack_require__(91);
 	
-	var _createHistory = __webpack_require__(291);
+	var _createHistory = __webpack_require__(290);
 	
 	var _createHistory2 = _interopRequireDefault(_createHistory);
 	
@@ -23369,13 +23734,13 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 147 */
+/* 148 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(305)
+	/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(304)
 	
-	var md5 = toConstructor(__webpack_require__(301))
-	var rmd160 = toConstructor(__webpack_require__(303))
+	var md5 = toConstructor(__webpack_require__(300))
+	var rmd160 = toConstructor(__webpack_require__(302))
 	
 	function toConstructor (fn) {
 	  return function () {
@@ -23404,51 +23769,6 @@
 	}
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26).Buffer))
-
-/***/ },
-/* 148 */
-/***/ function(module, exports) {
-
-	/* eslint-disable no-unused-vars */
-	'use strict';
-	var hasOwnProperty = Object.prototype.hasOwnProperty;
-	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-	
-	function toObject(val) {
-		if (val === null || val === undefined) {
-			throw new TypeError('Object.assign cannot be called with null or undefined');
-		}
-	
-		return Object(val);
-	}
-	
-	module.exports = Object.assign || function (target, source) {
-		var from;
-		var to = toObject(target);
-		var symbols;
-	
-		for (var s = 1; s < arguments.length; s++) {
-			from = Object(arguments[s]);
-	
-			for (var key in from) {
-				if (hasOwnProperty.call(from, key)) {
-					to[key] = from[key];
-				}
-			}
-	
-			if (Object.getOwnPropertySymbols) {
-				symbols = Object.getOwnPropertySymbols(from);
-				for (var i = 0; i < symbols.length; i++) {
-					if (propIsEnumerable.call(from, symbols[i])) {
-						to[symbols[i]] = from[symbols[i]];
-					}
-				}
-			}
-		}
-	
-		return to;
-	};
-
 
 /***/ },
 /* 149 */
@@ -36180,7 +36500,7 @@
 
 	var _Object$keys = __webpack_require__(43)['default'];
 	
-	var _Object$assign = __webpack_require__(139)['default'];
+	var _Object$assign = __webpack_require__(140)['default'];
 	
 	(function (factory) {
 	   false ? define(factory) : factory();
@@ -36814,138 +37134,6 @@
 /* 255 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
-	
-	__webpack_require__(41);
-	__webpack_require__(31);
-	
-	var React = __webpack_require__(1);
-	var ReactBootStrap = __webpack_require__(35);
-	var oxidate = __webpack_require__(32);
-	var timeSpan = __webpack_require__(33);
-	var utils = __webpack_require__(25);
-	var Button = ReactBootStrap.Button;
-	
-	var Table = ReactBootStrap.Table;
-	
-	var SolutionsTable = React.createClass({
-	  displayName: 'SolutionsTable',
-	
-	  render: function render() {
-	    var rows = [];
-	    var j = 0;
-	    var board = this.props.board;
-	    var solns = this.props.solutions;
-	
-	    if (solns.length === 0) return null;
-	
-	    solns.forEach(function (soln) {
-	      var mvs = soln.doc.moves;
-	      var lp = soln.lastPlay;
-	      var dt = oxidate.parse(lp);
-	      var lastplay = oxidate.toFormat(dt, "DDDD, MMMM D @ HH:MI");
-	      //console.log(lp + " : " + lastplay);
-	      var compl = soln.completed ? "yes" : "no";
-	      if (compl === "no" && soln.percentCompleted) {
-	        compl = soln.percentCompleted.toString() + "%";
-	      }
-	      var cnt = mvs[mvs.length - 1].moveCount;
-	      var reviewSolution = function reviewSolution() {
-	        board.reviewSolution(mvs);
-	      };
-	
-	      //var elapsed = '';
-	      //if (soln.secondsElapsed) elapsed = timeSpan.FromSeconds(soln.secondsElapsed).toString();
-	      //         <td>{ elapsed }</td>
-	      //      <th>Time Taken</th>
-	
-	      ++j;
-	      rows.push(React.createElement(
-	        'tr',
-	        { key: soln.solnId },
-	        React.createElement(
-	          'td',
-	          null,
-	          React.createElement(
-	            Button,
-	            { onClick: reviewSolution },
-	            j
-	          )
-	        ),
-	        React.createElement(
-	          'td',
-	          null,
-	          soln.userName
-	        ),
-	        React.createElement(
-	          'td',
-	          null,
-	          lastplay
-	        ),
-	        React.createElement(
-	          'td',
-	          null,
-	          cnt
-	        )
-	      ));
-	    });
-	
-	    return React.createElement(
-	      'div',
-	      null,
-	      React.createElement(
-	        'h2',
-	        null,
-	        'Leaderboard : '
-	      ),
-	      React.createElement(
-	        Table,
-	        { striped: true, bordered: true, condensed: true, hover: true },
-	        React.createElement(
-	          'thead',
-	          null,
-	          React.createElement(
-	            'tr',
-	            null,
-	            React.createElement(
-	              'th',
-	              null,
-	              '#'
-	            ),
-	            React.createElement(
-	              'th',
-	              null,
-	              'Player'
-	            ),
-	            React.createElement(
-	              'th',
-	              null,
-	              'At'
-	            ),
-	            React.createElement(
-	              'th',
-	              null,
-	              '# Moves'
-	            )
-	          )
-	        ),
-	        React.createElement(
-	          'tbody',
-	          null,
-	          rows
-	        )
-	      )
-	    );
-	  }
-	
-	});
-	
-	module.exports = SolutionsTable;
-
-/***/ },
-/* 256 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
 	
 	Object.defineProperty(exports, '__esModule', {
@@ -36968,7 +37156,7 @@
 	__webpack_require__(31);
 	var oxiDate = __webpack_require__(32);
 	var utils = __webpack_require__(25);
-	var uuid = __webpack_require__(138);
+	var uuid = __webpack_require__(139);
 	
 	var _require = __webpack_require__(25);
 	
@@ -37399,7 +37587,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 257 */
+/* 256 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -37509,7 +37697,7 @@
 	module.exports = ChallengesTable;
 
 /***/ },
-/* 258 */
+/* 257 */
 /***/ function(module, exports) {
 
 	// Generated code -- http://www.redblobgames.com/grids/hexagons/
@@ -37943,7 +38131,7 @@
 	exports.polygon_corners = polygon_corners;
 
 /***/ },
-/* 259 */
+/* 258 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -37973,7 +38161,7 @@
 	
 	var isMember = _require.isMember;
 	
-	var uuid = __webpack_require__(138);
+	var uuid = __webpack_require__(139);
 	
 	var timeSpan = __webpack_require__(33);
 	
@@ -38404,7 +38592,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 260 */
+/* 259 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -38488,8 +38676,7 @@
 	    var diff = false;
 	
 	    var brdsDiffer = function brdsDiffer(o1, o2) {
-	        console.log("differ called");
-	        //return false;
+	        //console.log("differ called");
 	        var ks1 = Object.keys(o1);
 	        var ks2 = Object.keys(o2);
 	        if (ks1.length != ks2.length) {
@@ -38568,7 +38755,7 @@
 	                try {
 	                    var t = JSON.parse(xhr.responseText);
 	                    localStorage.setItem('pseudoq.boards', xhr.responseText);
-	                    return dispatch({ type: 'loadContents', contents: t });
+	                    dispatch({ type: 'loadContents', contents: t });
 	                } catch (e) {
 	                    console.log("error (parsing response?) : " + e);
 	                }
@@ -38819,10 +39006,11 @@
 	        var _this2 = this;
 	
 	        var xhr = new XMLHttpRequest();
-	        //console.log("challenge5min puzzle requested");
+	        console.log("challenge5min puzzle requested");
 	        xhr.open("GET", '/challenge5min');
 	        xhr.onload = function () {
 	            var json = JSON.parse(xhr.responseText);
+	            console.log("challenge5min puzzle received");
 	            json = grph.Transformer(json).randomTransform();
 	            _this2.dispatch({ type: 'psq/LOAD', props: json });
 	        };
@@ -38830,13 +39018,13 @@
 	    },
 	
 	    dispatch: function dispatch(act) {
-	        console.log("dispatching");
+	        console.log("dispatching challenge5");
 	        var newst = (0, _PseudoqBoardJsx.psqReducer)(this.state.brdJson, act);
 	        this.setState({ brdJson: newst });
 	    },
 	
 	    render: function render() {
-	        console.log("rendering");
+	        console.log("rendering challenge5");
 	        var brdJson = this.state.brdJson;
 	
 	        return brdJson ? React.createElement(_PseudoqBoardJsx.PseudoqBoard, _extends({ key: 'challenge5:play', dayName: 'challenge5', pos: brdJson.puzzleId, dispatch: this.dispatch }, brdJson, { mode: 'play', random: true, timeOut: 300 })) : null;
@@ -38878,22 +39066,8 @@
 	exports.Challenge15min = Challenge15min;
 	var _hidatoApp = React.createClass({ displayName: 'HidatoApp',
 	
-	    componentDidMount: function componentDidMount() {
-	        var _this4 = this;
-	
-	        var xhr = new XMLHttpRequest();
-	        //console.log("hidato puzzle requested");
-	        xhr.open("GET", '/hidato');
-	        xhr.onload = function () {
-	            var json = JSON.parse(xhr.responseText);
-	            //console.log("puzzle received : "+json.pubID);
-	            _this4.props.dispatch({ type: 'loadHidatoBoard', json: json, side: 30 });
-	        };
-	        xhr.send();
-	    },
-	
 	    render: function render() {
-	        return this.props.cells ? React.createElement(_HidatoJsx.Hidato, _extends({ key: 'hidato:play', dispatch: this.props.dispatch }, this.props)) : null;
+	        return React.createElement(_HidatoJsx.Hidato, _extends({ key: 'hidato:play', dayName: 'hidato', pos: '0', dispatch: this.props.dispatch }, this.props, { mode: 'play' }));
 	    }
 	});
 	
@@ -39080,7 +39254,7 @@
 	var _daily = React.createClass({ displayName: 'Daily',
 	
 	    render: function render() {
-	        var _this5 = this;
+	        var _this4 = this;
 	
 	        var dayName = this.props.params.dayName;
 	
@@ -39096,14 +39270,14 @@
 	                    var p = pos;
 	                    var brd = brds[j];
 	                    var pzl = dayName + "/" + p;
-	                    var _dispatch = _this5.props.dispatch;
+	                    var _dispatch = _this4.props.dispatch;
 	                    var dispatch = function dispatch(act) {
 	                        act.dayName = dayName;
 	                        act.pos = p;
 	                        return _dispatch(act);
 	                    };
 	                    if (brd.gameType === 'Hidato') {
-	                        rslt.push(React.createElement(_HidatoJsx.Hidato, _extends({ key: pzl + ':view', dayName: dayName, pos: p, dispatch: dispatch }, brd, { mode: 'view' })));
+	                        rslt.push(React.createElement(_HidatoJsx.Hidato, _extends({ key: pzl + ':view', dayName: dayName, pos: p, dispatch: dispatch }, brd, { mode: 'view', side: 20 })));
 	                    } else {
 	                        rslt.push(React.createElement(_PseudoqBoardJsx.PseudoqBoard, _extends({ key: pzl + ':view', dayName: dayName, pos: p, dispatch: dispatch }, brd, { mode: 'view' })));
 	                    }
@@ -39186,7 +39360,7 @@
 	    },
 	
 	    saveMoniker: function saveMoniker() {
-	        var _this6 = this;
+	        var _this5 = this;
 	
 	        var newName = this.state.moniker;
 	        //console.log("saving moniker : "+newName);
@@ -39205,8 +39379,8 @@
 	                var rsp = JSON.parse(rsptxt);
 	                if (rsp.ok) {
 	                    localStorage.setItem('pseudoq.userName', newName);
-	                    _this6.history.goBack();
-	                } else _this6.setState({ response: rsp });
+	                    _this5.history.goBack();
+	                } else _this5.setState({ response: rsp });
 	            }
 	        };
 	        xhr.send(JSON.stringify({ userName: newName }));
@@ -39368,7 +39542,7 @@
 	*/
 
 /***/ },
-/* 261 */
+/* 260 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -39654,6 +39828,12 @@
 	module.exports = { Horizontal: Horizontal, Vertical: Vertical, Colwise: Colwise, Rowwise: Rowwise };
 
 /***/ },
+/* 261 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(266), __esModule: true };
+
+/***/ },
 /* 262 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -39669,23 +39849,17 @@
 /* 264 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(269), __esModule: true };
+	module.exports = { "default": __webpack_require__(270), __esModule: true };
 
 /***/ },
 /* 265 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(271), __esModule: true };
-
-/***/ },
-/* 266 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(282);
+	__webpack_require__(281);
 	module.exports = __webpack_require__(48).Object.assign;
 
 /***/ },
-/* 267 */
+/* 266 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var $ = __webpack_require__(66);
@@ -39694,7 +39868,7 @@
 	};
 
 /***/ },
-/* 268 */
+/* 267 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var $ = __webpack_require__(66);
@@ -39703,28 +39877,28 @@
 	};
 
 /***/ },
+/* 268 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(282);
+	module.exports = __webpack_require__(48).Object.isFrozen;
+
+/***/ },
 /* 269 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(283);
-	module.exports = __webpack_require__(48).Object.isFrozen;
+	module.exports = __webpack_require__(48).Object.keys;
 
 /***/ },
 /* 270 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(284);
-	module.exports = __webpack_require__(48).Object.keys;
-
-/***/ },
-/* 271 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(285);
 	module.exports = __webpack_require__(48).Object.setPrototypeOf;
 
 /***/ },
-/* 272 */
+/* 271 */
 /***/ function(module, exports) {
 
 	module.exports = function(it){
@@ -39733,7 +39907,7 @@
 	};
 
 /***/ },
-/* 273 */
+/* 272 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isObject = __webpack_require__(90);
@@ -39743,15 +39917,15 @@
 	};
 
 /***/ },
-/* 274 */
+/* 273 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.1 Object.assign(target, source, ...)
-	var toObject = __webpack_require__(143)
-	  , IObject  = __webpack_require__(280)
-	  , enumKeys = __webpack_require__(278);
+	var toObject = __webpack_require__(144)
+	  , IObject  = __webpack_require__(279)
+	  , enumKeys = __webpack_require__(277);
 	
-	module.exports = __webpack_require__(141)(function(){
+	module.exports = __webpack_require__(142)(function(){
 	  return Symbol() in Object.assign({}); // Object.assign available and Symbol is native
 	}) ? function assign(target, source){   // eslint-disable-line no-unused-vars
 	  var T = toObject(target)
@@ -39769,7 +39943,7 @@
 	} : Object.assign;
 
 /***/ },
-/* 275 */
+/* 274 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -39779,11 +39953,11 @@
 	};
 
 /***/ },
-/* 276 */
+/* 275 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// optional / simple context binding
-	var aFunction = __webpack_require__(272);
+	var aFunction = __webpack_require__(271);
 	module.exports = function(fn, that, length){
 	  aFunction(fn);
 	  if(that === undefined)return fn;
@@ -39803,7 +39977,7 @@
 	};
 
 /***/ },
-/* 277 */
+/* 276 */
 /***/ function(module, exports) {
 
 	// 7.2.1 RequireObjectCoercible(argument)
@@ -39813,7 +39987,7 @@
 	};
 
 /***/ },
-/* 278 */
+/* 277 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// all enumerable object keys, includes symbols
@@ -39832,7 +40006,7 @@
 	};
 
 /***/ },
-/* 279 */
+/* 278 */
 /***/ function(module, exports) {
 
 	// https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
@@ -39842,24 +40016,24 @@
 	if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
 
 /***/ },
-/* 280 */
+/* 279 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// indexed object, fallback for non-array-like ES3 strings
-	var cof = __webpack_require__(275);
+	var cof = __webpack_require__(274);
 	module.exports = 0 in Object('z') ? Object : function(it){
 	  return cof(it) == 'String' ? it.split('') : Object(it);
 	};
 
 /***/ },
-/* 281 */
+/* 280 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Works with __proto__ only. Old v8 can't work with null proto objects.
 	/* eslint-disable no-proto */
 	var getDesc  = __webpack_require__(66).getDesc
 	  , isObject = __webpack_require__(90)
-	  , anObject = __webpack_require__(273);
+	  , anObject = __webpack_require__(272);
 	var check = function(O, proto){
 	  anObject(O);
 	  if(!isObject(proto) && proto !== null)throw TypeError(proto + ": can't set as prototype!");
@@ -39868,7 +40042,7 @@
 	  set: Object.setPrototypeOf || ('__proto__' in {} // eslint-disable-line
 	    ? function(buggy, set){
 	        try {
-	          set = __webpack_require__(276)(Function.call, getDesc(Object.prototype, '__proto__').set, 2);
+	          set = __webpack_require__(275)(Function.call, getDesc(Object.prototype, '__proto__').set, 2);
 	          set({}, []);
 	        } catch(e){ buggy = true; }
 	        return function setPrototypeOf(O, proto){
@@ -39883,24 +40057,37 @@
 	};
 
 /***/ },
-/* 282 */
+/* 281 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.3.1 Object.assign(target, source)
 	var $def = __webpack_require__(89);
 	
-	$def($def.S + $def.F, 'Object', {assign: __webpack_require__(274)});
+	$def($def.S + $def.F, 'Object', {assign: __webpack_require__(273)});
 
 /***/ },
-/* 283 */
+/* 282 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.12 Object.isFrozen(O)
 	var isObject = __webpack_require__(90);
 	
-	__webpack_require__(142)('isFrozen', function($isFrozen){
+	__webpack_require__(143)('isFrozen', function($isFrozen){
 	  return function isFrozen(it){
 	    return isObject(it) ? $isFrozen ? $isFrozen(it) : false : true;
+	  };
+	});
+
+/***/ },
+/* 283 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// 19.1.2.14 Object.keys(O)
+	var toObject = __webpack_require__(144);
+	
+	__webpack_require__(143)('keys', function($keys){
+	  return function keys(it){
+	    return $keys(toObject(it));
 	  };
 	});
 
@@ -39908,28 +40095,15 @@
 /* 284 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// 19.1.2.14 Object.keys(O)
-	var toObject = __webpack_require__(143);
-	
-	__webpack_require__(142)('keys', function($keys){
-	  return function keys(it){
-	    return $keys(toObject(it));
-	  };
-	});
+	// 19.1.3.19 Object.setPrototypeOf(O, proto)
+	var $def = __webpack_require__(89);
+	$def($def.S, 'Object', {setPrototypeOf: __webpack_require__(280).set});
 
 /***/ },
 /* 285 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// 19.1.3.19 Object.setPrototypeOf(O, proto)
-	var $def = __webpack_require__(89);
-	$def($def.S, 'Object', {setPrototypeOf: __webpack_require__(281).set});
-
-/***/ },
-/* 286 */
-/***/ function(module, exports, __webpack_require__) {
-
-	exports = module.exports = __webpack_require__(144)();
+	exports = module.exports = __webpack_require__(145)();
 	// imports
 	exports.push([module.id, "@import url(//fonts.googleapis.com/css?family=Lato:400,700,400italic);", ""]);
 	
@@ -39940,10 +40114,10 @@
 
 
 /***/ },
-/* 287 */
+/* 286 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(144)();
+	exports = module.exports = __webpack_require__(145)();
 	// imports
 	
 	
@@ -39954,7 +40128,7 @@
 
 
 /***/ },
-/* 288 */
+/* 287 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -39985,7 +40159,7 @@
 	}
 
 /***/ },
-/* 289 */
+/* 288 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -40006,9 +40180,9 @@
 	
 	var _DOMUtils = __webpack_require__(91);
 	
-	var _DOMStateStorage = __webpack_require__(145);
+	var _DOMStateStorage = __webpack_require__(146);
 	
-	var _createDOMHistory = __webpack_require__(146);
+	var _createDOMHistory = __webpack_require__(147);
 	
 	var _createDOMHistory2 = _interopRequireDefault(_createDOMHistory);
 	
@@ -40127,7 +40301,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 290 */
+/* 289 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -40152,9 +40326,9 @@
 	
 	var _DOMUtils = __webpack_require__(91);
 	
-	var _DOMStateStorage = __webpack_require__(145);
+	var _DOMStateStorage = __webpack_require__(146);
 	
-	var _createDOMHistory = __webpack_require__(146);
+	var _createDOMHistory = __webpack_require__(147);
 	
 	var _createDOMHistory2 = _interopRequireDefault(_createDOMHistory);
 	
@@ -40328,7 +40502,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 291 */
+/* 290 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -40347,11 +40521,11 @@
 	
 	var _invariant2 = _interopRequireDefault(_invariant);
 	
-	var _deepEqual = __webpack_require__(292);
+	var _deepEqual = __webpack_require__(291);
 	
 	var _deepEqual2 = _interopRequireDefault(_deepEqual);
 	
-	var _AsyncUtils = __webpack_require__(288);
+	var _AsyncUtils = __webpack_require__(287);
 	
 	var _Actions = __webpack_require__(67);
 	
@@ -40569,12 +40743,12 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 292 */
+/* 291 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var pSlice = Array.prototype.slice;
-	var objectKeys = __webpack_require__(294);
-	var isArguments = __webpack_require__(293);
+	var objectKeys = __webpack_require__(293);
+	var isArguments = __webpack_require__(292);
 	
 	var deepEqual = module.exports = function (actual, expected, opts) {
 	  if (!opts) opts = {};
@@ -40669,7 +40843,7 @@
 
 
 /***/ },
-/* 293 */
+/* 292 */
 /***/ function(module, exports) {
 
 	var supportsArgumentsClass = (function(){
@@ -40695,7 +40869,7 @@
 
 
 /***/ },
-/* 294 */
+/* 293 */
 /***/ function(module, exports) {
 
 	exports = module.exports = typeof Object.keys === 'function'
@@ -40710,7 +40884,7 @@
 
 
 /***/ },
-/* 295 */
+/* 294 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -40840,7 +41014,7 @@
 
 
 /***/ },
-/* 296 */
+/* 295 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -40930,7 +41104,7 @@
 
 
 /***/ },
-/* 297 */
+/* 296 */
 /***/ function(module, exports) {
 
 	
@@ -40969,10 +41143,10 @@
 
 
 /***/ },
-/* 298 */
+/* 297 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(147)
+	/* WEBPACK VAR INJECTION */(function(Buffer) {var createHash = __webpack_require__(148)
 	
 	var zeroBuffer = new Buffer(128)
 	zeroBuffer.fill(0)
@@ -41019,7 +41193,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26).Buffer))
 
 /***/ },
-/* 299 */
+/* 298 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {var intSize = 4;
@@ -41060,10 +41234,10 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26).Buffer))
 
 /***/ },
-/* 300 */
+/* 299 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(Buffer) {var rng = __webpack_require__(310)
+	/* WEBPACK VAR INJECTION */(function(Buffer) {var rng = __webpack_require__(309)
 	
 	function error () {
 	  var m = [].slice.call(arguments).join(' ')
@@ -41074,9 +41248,9 @@
 	    ].join('\n'))
 	}
 	
-	exports.createHash = __webpack_require__(147)
+	exports.createHash = __webpack_require__(148)
 	
-	exports.createHmac = __webpack_require__(298)
+	exports.createHmac = __webpack_require__(297)
 	
 	exports.randomBytes = function(size, callback) {
 	  if (callback && callback.call) {
@@ -41097,7 +41271,7 @@
 	  return ['sha1', 'sha256', 'sha512', 'md5', 'rmd160']
 	}
 	
-	var p = __webpack_require__(309)(exports)
+	var p = __webpack_require__(308)(exports)
 	exports.pbkdf2 = p.pbkdf2
 	exports.pbkdf2Sync = p.pbkdf2Sync
 	
@@ -41120,7 +41294,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26).Buffer))
 
 /***/ },
-/* 301 */
+/* 300 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -41132,7 +41306,7 @@
 	 * See http://pajhome.org.uk/crypt/md5 for more info.
 	 */
 	
-	var helpers = __webpack_require__(299);
+	var helpers = __webpack_require__(298);
 	
 	/*
 	 * Calculate the MD5 of an array of little-endian words, and a bit length
@@ -41281,7 +41455,7 @@
 
 
 /***/ },
-/* 302 */
+/* 301 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {module.exports = function(crypto) {
@@ -41372,7 +41546,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26).Buffer))
 
 /***/ },
-/* 303 */
+/* 302 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {
@@ -41584,7 +41758,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26).Buffer))
 
 /***/ },
-/* 304 */
+/* 303 */
 /***/ function(module, exports) {
 
 	module.exports = function (Buffer) {
@@ -41667,7 +41841,7 @@
 
 
 /***/ },
-/* 305 */
+/* 304 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var exports = module.exports = function (alg) {
@@ -41677,15 +41851,15 @@
 	}
 	
 	var Buffer = __webpack_require__(26).Buffer
-	var Hash   = __webpack_require__(304)(Buffer)
+	var Hash   = __webpack_require__(303)(Buffer)
 	
-	exports.sha1 = __webpack_require__(306)(Buffer, Hash)
-	exports.sha256 = __webpack_require__(307)(Buffer, Hash)
-	exports.sha512 = __webpack_require__(308)(Buffer, Hash)
+	exports.sha1 = __webpack_require__(305)(Buffer, Hash)
+	exports.sha256 = __webpack_require__(306)(Buffer, Hash)
+	exports.sha512 = __webpack_require__(307)(Buffer, Hash)
 
 
 /***/ },
-/* 306 */
+/* 305 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -41829,7 +42003,7 @@
 
 
 /***/ },
-/* 307 */
+/* 306 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -41982,7 +42156,7 @@
 
 
 /***/ },
-/* 308 */
+/* 307 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var inherits = __webpack_require__(95).inherits
@@ -42232,10 +42406,10 @@
 
 
 /***/ },
-/* 309 */
+/* 308 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var pbkdf2Export = __webpack_require__(302)
+	var pbkdf2Export = __webpack_require__(301)
 	
 	module.exports = function (crypto, exports) {
 	  exports = exports || {}
@@ -42250,7 +42424,7 @@
 
 
 /***/ },
-/* 310 */
+/* 309 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global, Buffer) {(function() {
@@ -42283,7 +42457,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(26).Buffer))
 
 /***/ },
-/* 311 */
+/* 310 */
 /***/ function(module, exports) {
 
 	if (typeof Object.create === 'function') {
@@ -42312,7 +42486,7 @@
 
 
 /***/ },
-/* 312 */
+/* 311 */
 /***/ function(module, exports) {
 
 	module.exports = function isBuffer(arg) {
@@ -42321,6 +42495,51 @@
 	    && typeof arg.fill === 'function'
 	    && typeof arg.readUInt8 === 'function';
 	}
+
+/***/ },
+/* 312 */
+/***/ function(module, exports) {
+
+	/* eslint-disable no-unused-vars */
+	'use strict';
+	var hasOwnProperty = Object.prototype.hasOwnProperty;
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+	
+	function toObject(val) {
+		if (val === null || val === undefined) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+	
+		return Object(val);
+	}
+	
+	module.exports = Object.assign || function (target, source) {
+		var from;
+		var to = toObject(target);
+		var symbols;
+	
+		for (var s = 1; s < arguments.length; s++) {
+			from = Object(arguments[s]);
+	
+			for (var key in from) {
+				if (hasOwnProperty.call(from, key)) {
+					to[key] = from[key];
+				}
+			}
+	
+			if (Object.getOwnPropertySymbols) {
+				symbols = Object.getOwnPropertySymbols(from);
+				for (var i = 0; i < symbols.length; i++) {
+					if (propIsEnumerable.call(from, symbols[i])) {
+						to[symbols[i]] = from[symbols[i]];
+					}
+				}
+			}
+		}
+	
+		return to;
+	};
+
 
 /***/ },
 /* 313 */
@@ -43901,7 +44120,7 @@
 	
 	var _interopRequireDefault = __webpack_require__(2)['default'];
 	
-	var _interopRequireWildcard = __webpack_require__(140)['default'];
+	var _interopRequireWildcard = __webpack_require__(141)['default'];
 	
 	exports.__esModule = true;
 	
@@ -44419,7 +44638,7 @@
 	
 	var _objectWithoutProperties = __webpack_require__(17)['default'];
 	
-	var _Object$isFrozen = __webpack_require__(264)['default'];
+	var _Object$isFrozen = __webpack_require__(263)['default'];
 	
 	var _Object$keys = __webpack_require__(43)['default'];
 	

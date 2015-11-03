@@ -75,6 +75,7 @@ let getSolutions = function (j) {
         let solns = pg.get_solutions(j)
                     .then( function(a ) { 
                         //console.log(a.length.toString() + " solutions found");
+                        a.forEach(o => { o.moves = o.doc.moves; delete o.doc});
                         a.sort(solutionSorter); 
                         if (a.length > 10) a.length = 10;
                         return a;
@@ -165,7 +166,7 @@ let getWeeklyUser = function(dt,uid) {
             rows.forEach( function (r) {
                 let tdt = oxiDate.toFormat(r.date, 'yyyyMMdd');
                 let pzl = r.layout;
-                pzl.moves = r.moves;  
+                if (r.doc) pzl.moves = r.doc.moves;
                 pzl.pubID = r.puzzleId;  
                 pzl.gameType = r.gameType;        
                 if (!wk[tdt]) wk[tdt] = {};
@@ -343,7 +344,10 @@ app.use(router.get('/hidato', function *() {
 app.use(router.post('/solutions', function *() {
     let body = this.request.body;  // from bodyparser 
     body.user = this.userId.id;
+    body.doc = {moves: body.moves};
+    delete body.moves;
     let id = body.puzzle;
+
     console.log('solution received : '+ id); // JSON.stringify(body));
 
     var p = pg.upsert_solution(body)
@@ -364,6 +368,8 @@ app.use(router.post('/solutions', function *() {
 app.use(router.post('/challenges', function *() {
     let body = this.request.body;  // from bodyparser 
     body.user = this.userId.id;
+    body.doc = {moves: body.moves};
+    delete body.moves;
     let id = body.timeOut;
     console.log('challenge result received : '+ id); // JSON.stringify(body));
 

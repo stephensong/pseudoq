@@ -47,13 +47,6 @@ const {
 
 let { blogReducer, Blog, BlogPost, BlogEntry} = require('./blog.jsx');
 let { linksReducer, Links} = require('./links.jsx');
-let { hidatoReducer} = require('Hidato.jsx');
-
-// Use hash location for Github Pages
-// but switch to HTML5 history locally.
-//const history = process.env.NODE_ENV === 'production' ?
-//    createHashHistory() :
-//    createBrowserHistory();
 
 const history = createHashHistory({queryKey: false});
 
@@ -71,44 +64,22 @@ const finalCreateStore =  applyMiddleware(thunkMiddleware
                   //,loggerMiddleware
                   )(createStore); 
 
-const initialState = function() {
-    return {
-        days: {},     // keyed by dayName/pos
-        hidato: {}, // keyed by puzzleId  - to be removed but is useful as an exercise.
-        blog: {},
-        links: {}
-    };
+var today = oxiDate.toUTC(new Date());
+
+const initialState = {
+    today,
+    days: undefined,     // keyed by dayName/pos
+    blog: undefined,
+    links: undefined
 };
 
 
-function reducer(state, action) {
-    if (!state) {
-        console.log("initializing state")
-        state = initialState();
-    }
-    let hidato = hidatoReducer(state.hidato, action);
+function reducer(state = initialState, action) {
     let days = daysReducer(state.days, action);
     let blog = blogReducer(state.blog, action);
     let links = linksReducer(state.links, action);
-    let rslt = { hidato, days, blog, links  };
+    let rslt = {...state, days, blog, links  };
     return rslt;
-}
-
-
-const store = finalCreateStore(reducer, initialState);
-
-@connect(state => state)
-class Root extends React.Component {
-  static propTypes = {
-    history: PropTypes.object.isRequired
-  }
-
-  render () {
-    //console.log("rendering Root");
-    return (
-      <div>{getRootChildren(this.props)}</div>
-    )
-  }
 }
 
 function renderRoutes (history) {
@@ -138,8 +109,6 @@ function renderRoutes (history) {
   );
 }
 
-
-
 function getRootChildren (props) {
        // console.log("getRootChildren called");
 
@@ -158,6 +127,24 @@ function getRootChildren (props) {
   */
   return rootChildren;
 }
+
+const store = finalCreateStore(reducer, initialState);
+
+@connect(state => state)
+class Root extends React.Component {
+  static propTypes = {
+    history: PropTypes.object.isRequired
+  }
+
+  render () {
+    //console.log("rendering Root");
+    return (
+      <div>{getRootChildren(this.props)}</div>
+    )
+  }
+}
+
+
 
 ReactDOM.render(
   <Provider store={store}>

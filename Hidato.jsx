@@ -22,6 +22,15 @@ const {LinkContainer} = require('react-router-bootstrap');
 
 const Flex = require('flex.jsx');
 
+const LOADBOARD = 'hidato/LOADBOARD';
+const LOADSOLUTIONS = 'hidato/LOADSOLUTIONS';
+const PREVINSERTVAL = 'hidato/PREVINSERTVAL';
+const NEXTINSERTVAL = 'hidato/NEXTINSERTVAL';
+const CHECK = 'hidato/CHECK';
+const UNDO = 'hidato/UNDO';
+const RESET = 'hidato/RESET';
+const SETSTATE = 'hidato/SETSTATE';
+
 
 function initLinks(dim) {
     let links = {};
@@ -67,31 +76,40 @@ let checkCell = function(c) {
     return true;
 };
 
-let clearVal = function(brd, i) {
-    let cells = {...brd.cells};
-    let v = cells[i].val;
-    cells[i] = {...brd.cells[i]};
-    cells[i].val = 0;
-    cells[i].isError = false;
-    let vals = {...brd.vals};
-    delete vals[v];
-    let maxVal = brd.maxVal;
-    let minVal = brd.minVal;
-    if (v < minVal) minVal = v;
-    else if (v > maxVal) maxVal = v;
-    return {...brd, cells, vals, minVal, maxVal};
-};
+function setMaxMin(brd) {
+    let {vals,insertVal,direction} = brd;
+    let minVal = 1;
+    if (!insertVal) insertVal = 0;
+    while (vals[minVal]) minVal++;
+    let maxVal = brd.size - 1;
+    while (vals[maxVal]) maxVal--;
+    if (insertVal >= maxVal) {
+        insertVal = maxVal;
+        direction = 'down';
+    }
+    else if (insertVal <= minVal) {
+        insertVal = minVal;
+        direction = 'up';
+    }
+    return {...brd, direction, insertVal, minVal, maxVal};
+
+}
 
 let setVal = function(brd, i, v) {
-    if (v === 0) return clearVal(brd, i, 0);
     let cells = {...brd.cells};
-    let c = {...brd.cells[i]};
-    cells[i] = c;
-    c.val = v;
     let vals = {...brd.vals};
-    vals[v] = i;
-    return {...brd, cells: cells, vals: vals};
+    let c = {...cells[i], isError: false};
+    cells[i] = c;
+    if (v > 0) vals[v] = i;
+    else delete vals[c.val];
+    c.val = v;
+    return setMaxMin({...brd, cells, vals});
 };
+
+let clearVal = function(brd, i) {
+    return setVal(brd,i,0);
+};
+
 
 /*
 let putValue = function(brd, i, v) {
@@ -125,40 +143,50 @@ function applyMoves(brd, moves) {
     let vals = {...brd.vals};
     moves.forEach(mv => {
         if (mv.cell) {
-            let v = mv.val;
             let i = mv.cell;
-            cells[i] = {...cells[i], val: v}
+            let v = mv.val;
+            let c = {...cells[i]};
+            cells[i] = c;
+            c.val = v;
             if (v > 0) vals[v] = i;
             else delete vals[v];
-        }
+       }
     });
-    let minVal = 1;
-    while (vals[minVal]) minVal++;
-    let maxVal = brd.size - 1;
-    while (vals[maxVal]) maxVal--;
-    return {...brd, cells, vals, moves, minVal, maxVal};
-
+    return setMaxMin({...brd, cells, vals, moves});
 };
 
 
 let newBoard = function(brd) {
-    let {dim,vals} = brd;
-    let map = ht.hex_map(dim);
-    let links = initLinks(dim)  
-    let cells = {}
-    map.forEach( (c,i) => { cells[i+1] = {id: i+1, val: 0, hex: c, given: false, fills: {} }; });
-
-    Object.keys(vals).forEach(function (v) {
-        let i = vals[v];
-        //console.log(i.toString()+", "+v);
-        cells[i].given = true;
-        cells[i].val = v;
-    });
-
-    return {...brd, size: map.length, cells: cells, links: links };
+    let {dim,cells,vals,links,size} = brd;
+    if (cells) {
+        let newcells = {};
+        vals = {};
+        Object.keys(cells).forEach(function (i) {
+            let c = cells[i];
+            c = {...c, isError: false};
+            newcells[i] = c;
+            if (c.given) vals[c.val] = i;
+            else c.val = 0;
+        });
+        cells = newcells;
+    } 
+    else {
+        let map = ht.hex_map(dim);
+        size = map.length;
+        links = initLinks(dim)
+        cells = {};
+        map.forEach( (c,i) => { cells[i+1] = {id: i+1, val: 0, hex: c, given: false, fills: {} }; });
+        Object.keys(vals).forEach(function (v) {
+            let i = vals[v];
+            //console.log(i.toString()+", "+v);
+            cells[i].given = true;
+            cells[i].val = v;
+        });
+    }
+    return setMaxMin({...brd, vals, size, cells, links });
 };
 
-function hidato_draw(brd, side) {
+function hidato_draw(brd, side, completed) {
 
     let {dim} = brd;
     let size = {x: side, y: side};
@@ -185,6 +213,7 @@ function hidato_draw(brd, side) {
     let draw_hex = function(cell, clr, fillClr) {
         let h = cell.hex;
         let cs = ht.polygon_corners(layout, h);
+        if (completed && !cell.given) fillClr = 'LightGreen';
         cxt.save();
         //cxt.translate(0.5, 0.5);
         cxt.strokeStyle = clr;
@@ -199,23 +228,31 @@ function hidato_draw(brd, side) {
         }
         cxt.closePath();
         cxt.stroke();
-        if (cell.given) cxt.fill();
+        if (cell.given || completed) cxt.fill();
         cxt.restore();
     };
 
-    Object.keys(brd.cells).forEach(function (c) { draw_hex(brd.cells[c],'black','lightgray'); });
+    Object.keys(brd.cells).forEach(function (c) { draw_hex(brd.cells[c],'black', 'lightgray'); });
     
-    return {...brd, url: canvas.toDataURL(), layout, side, height: canvas.height, width: canvas.width} ;
+    return {url: canvas.toDataURL(), layout, side, height: canvas.height, width: canvas.width} ;
+};
+
+let isCompleted = function(brd) {
+    let soln = brd.soln;
+    let vals = brd.vals;
+    let rslt = Object.keys(soln).every(i => (typeof vals[i]) === 'string' || soln[i] === vals[i] );
+    return rslt;
 };
 
 
 let renderedBoards = {};
 
 let renderBoard = function(brd,side) {
-    let ky = (brd.pubID ? brd.pubID.toString() : '_' ) + side ;
+    let completed = isCompleted(brd)
+    let ky = brd.pubID + ':' + side + ( completed ? 1 : 0 );
 
     if (!renderedBoards[ky]) {
-        let hid = hidato_draw(brd, side);
+        let hid = hidato_draw(brd, side, completed);
         renderedBoards[ky] = hid;
     }
     return renderedBoards[ky];
@@ -227,12 +264,6 @@ let hasErrors = function(brd) {
     return Object.keys(vals).some(i => soln[i] !== vals[i] );
 };
 
-let isCompleted = function(brd) {
-    let soln = brd.soln;
-    let vals = brd.vals;
-    return Object.keys(soln).some(i => soln[i] !== vals[i] );
-};
-
 function checkBoard(brd) {
     let soln = brd.soln;
     let vals = brd.vals;
@@ -240,23 +271,10 @@ function checkBoard(brd) {
     Object.keys(vals).forEach(function (i) {
         let k = vals[i];
         let c = cells[k];
-        cells[k] = {...c, isError: vals[i] !== soln[i] };
+        cells[k] = {...c, isError: !c.given && vals[i] !== soln[i] };
     })
-    return Objectassign({}, brd, {cells: cells});
+    return {...brd, cells: cells};
 };
-
-function resetBoard(brd) {
-    let soln = brd.soln;
-    let cells = {};
-    let vals = {};
-    Object.keys(brd.cells).forEach(function (k) {
-        let c = brd.cells[k];
-        cells[k] = Objectassign({}, c, {val : c.given ? c.val : 0, isError: false});
-        if (c.given) vals[c.val] = k;
-    });
-    return Objectassign({}, brd, {cells: cells, vals: vals});
-};
-
 
 let cellFromHex = function(brd,h) {
     let cs = brd.cells;
@@ -294,6 +312,15 @@ function cell_to_inner_rect(board, c) {
 
 };
 
+let initState =  {
+    gameType: 'Hidato',
+    direction: 'up',
+    prevCell: null,
+    moves: [],
+    solutions: [],
+    reSubmit: false
+};
+
 function getLocalStorage(brd) {
     console.log("getLocalStorage called");
     let {dayName, pos, pubID} = brd;
@@ -303,14 +330,18 @@ function getLocalStorage(brd) {
     stg = JSON.parse(stg);
     if (!pubID) return stg;
     if (stg.pubID !== pubID) return brd;
+    return stg;
+    /*
     let mvs = stg.moves;
-    bmvs = brd.moves;
+    if (mvs.moves) mvs = mvs.moves;  // remove in 2016
+    let bmvs = brd.moves;
     if (bmvs.length >= mvs.length) return brd;
     if (bmvs.length > 0) {
-        brd = resetBoard(brd);
-        brd = initState(brd);
+        brd = newBoard(brd);
+        brd = {...brd, ...initState};
     }
     return applyMoves(brd, mvs);
+    */
 }
 
 function setLocalStorage(brd, moves) {
@@ -319,31 +350,6 @@ function setLocalStorage(brd, moves) {
     if (moves) brd = {...brd, moves};
     localStorage.setItem('pseudoq.local.' + pzl, JSON.stringify(brd));
 }
-
-let initState = function(brd) {
-    let ival = 1;
-    let minVal = 1;
-    let maxVal = -1;
-    if (brd) {
-        while (brd.vals[ival]) ++ival;
-        minVal = ival;
-        maxVal = brd.size - 1;
-    }
-    else brd = {};
-
-    return {...brd, 
-            gameType: 'Hidato',
-            direction: 'up',
-            prevCell: null,
-            insertVal: ival,
-            finished: false,
-            moves: [],
-            solns: [],
-            minVal,
-            maxVal, 
-            reSubmit: false
-        };
-};
 
 function nextInsertVal(dir, from, board) {
     if (!board) {
@@ -388,13 +394,13 @@ function nextInsertVal(dir, from, board) {
     return {insertVal: v, direction: dir, minVal, maxVal};
 };
 
-function clickOnCell(brd,cell) {
+function clickOnCell(brd,cell,dayName,pos) {
     return function (dispatch) {
         let dir = brd.direction;
         if (cell.given) {
             if (brd.prevCell && (brd.prevCell.id === cell.id) ) dir = ( dir === 'up' ? 'down' : 'up' );
             let vf = nextInsertVal(dir, cell.val, brd);
-            dispatch({type: SETSTATE, props: {...vf, prevCell: cell} });
+            dispatch({type: SETSTATE, dayName, pos, props: {...vf, prevCell: cell} });
         }
         else { 
             let reSubmit = brd.reSubmit;
@@ -402,26 +408,27 @@ function clickOnCell(brd,cell) {
             let moveCount = ( l === 0 ? 0 : brd.moves[l - 1].moveCount ) + 1;
             let v = cell.val > 0 ? 0 : brd.insertVal;
             let moves = [...brd.moves, {cell: cell.id, val: v, insertVal: brd.insertVal, moveCount, prv: cell.val}];
-            let completed = false
             let newb = null;
             if (cell.val > 0) {
                 newb = clearVal(brd,cell.id);
-                newb.completed = false;
                 newb.moves = moves;
-                dispatch({type: SETSTATE, props: {...newb, insertVal: cell.val, prevCell: cell, reSubmit} });
+                newb.insertVal = cell.val
             }
             else {
                 newb = setVal(brd, cell.id, brd.insertVal);
-                newb.completed = isCompleted(newb);
-                newb.moves = moves;
+                if (isCompleted(newb)) reSubmit = true;
                 let o = nextInsertVal( dir, brd.insertVal, newb); 
-                dispatch({type: SETSTATE, props: {...newb, ...o, prevCell: cell, reSubmit} });
+                newb = {...newb, ...o};
             }
-            setLocalStorage(newb, moves);
+            newb.moves = moves;
+            newb.dayName = dayName;
+            newb.pos = pos;
+            setLocalStorage(newb);
             if (reSubmit) {
                 submit(newb, moves, dispatch);
                 reSubmit = false;
             }
+            dispatch({type: SETSTATE, dayName, pos, props: {...newb, prevCell: cell, reSubmit} });
         }
         //return brd;  // should not happen
     }
@@ -429,30 +436,31 @@ function clickOnCell(brd,cell) {
 
 
 function submit(board, moves, dispatch) {
-    let {pubID} = board;
+    let {pubID, dayName, pos} = board;
 
     let xhr = new XMLHttpRequest();   
     xhr.open("POST", "/solutions");
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    let rslt = {puzzle: pubID, doc: { moves } };
+    let rslt = {puzzle: pubID, moves };
     rslt.lastPlay = new Date();
-    rslt.moveCount = moves.length;
+    rslt.moveCount = moves[moves.length - 1].moveCount;
+    rslt.completed = isCompleted(board);
 
     let txt = JSON.stringify(rslt);
 
     xhr.send(txt);
-    xhr.onload = () => receiveSolutions(xhr, dispatch);
-    dispatch({type: SETSTATE,  props: {reSubmit: false} });
+    xhr.onload = () => receiveSolutions(xhr, dayName, pos, dispatch);
+    dispatch({type: SETSTATE, dayName, pos, props: {reSubmit: false} });
 };
 
-function requestSolutions(pubID, dispatch) {
+function requestSolutions(pubID, dayName, pos, dispatch) {
     let xhr = new XMLHttpRequest();   
     xhr.open("GET", "/solutions/"+pubID);
-    xhr.onload = () => receiveSolutions(xhr, dispatch);
+    xhr.onload = () => receiveSolutions(xhr, dayName, pos, dispatch);
     xhr.send();
 };
 
-function receiveSolutions(xhr,dispatch) {
+function receiveSolutions(xhr, dayName, pos, dispatch) {
     if(xhr.status !== 200) { 
         let msg = 'failed : ' + xhr.status + " - " + xhr.responseText;
         console.log(msg);
@@ -463,105 +471,95 @@ function receiveSolutions(xhr,dispatch) {
             //console.log("solutions received : "+solns.length);
             //solns.forEach(function (s) {console.log(s.lastPlay);});
             //localStorage.setItem('pseudoq.solutions.' + dayName + '.' + pos, JSON.stringify(solns));
-            dispatch({type: LOADSOLUTIONS, solns});
+            dispatch({type: LOADSOLUTIONS, dayName, pos, solns});
         } else {
             console.log(rsp.msg);
         }
     }
 };
 
-const LOADBOARD = 'hidato/LOADBOARD';
-const LOADSOLUTIONS = 'hidato/LOADSOLUTIONS';
-const PREVINSERTVAL = 'hidato/PREVINSERTVAL';
-const NEXTINSERTVAL = 'hidato/NEXTINSERTVAL';
-const CHECK = 'hidato/CHECK';
-const UNDO = 'hidato/UNDO';
-const RESET = 'hidato/RESET';
-const SETSTATE = 'hidato/SETSTATE';
-
-export function hidatoReducer(st, action) {
-    if (!st) {
-        return initState();
-    }
+export function hidatoReducer(st = initState, action) {
+    
     let v = st.insertVal;
     let dir = st.direction;
-    let brd = null;
-    let moves = st.moves;
+    let moves = st.moves || [];
     let l = moves.length;
     let moveCount = l == 0 ? 0 : moves[l - 1].moveCount;
 
-    switch (action.type) {
-    case LOADBOARD:
+    let typ = action.type;
+    if (typ === LOADBOARD) {
         //console.log("loading board");
         let js = action.json || st;
-        brd = newBoard(js);
-        brd = renderBoard(brd,action.side);
-        brd = initState(brd);
+        let brd = newBoard(js);
+        brd = {...brd, ...initState};
         brd = getLocalStorage(brd);
         setLocalStorage(brd);
         return brd;
+    }
+    else if (typ === LOADSOLUTIONS) return {...st, solutions: action.solns};  
 
-    case LOADSOLUTIONS:  
-        return {...st, solns: action.solns};  
-
-    case PREVINSERTVAL:
+    else if (typ === PREVINSERTVAL) {
         dir = 'down';
         v = nextInsertVal(dir, v, st);
         return {...st, ...v, prevCell: null}; 
+    }
 
-    case NEXTINSERTVAL:
+    else if (typ === NEXTINSERTVAL) {
         dir = 'up';
         v = nextInsertVal(dir, v, st);
         return {...st, ...v, prevCell: null}; 
+    }
 
-    case CHECK:
-        brd = checkBoard(st);
+    else if (typ === CHECK ) {
+        let brd = checkBoard(st);
         moveCount += 10;
         moves = [...st.moves, { moveCount }];
         setLocalStorage(brd, moves);
         return {...brd, prevCell: null, moves };
+    }
 
-    case UNDO:
+    else if (typ === UNDO) {
         //console.log("undo called");
         moveCount++;
         let l = st.moves.length - 1;
         while (!st.moves[l].cell) --l;
         let mv = st.moves[l];
         let moves = st.moves.slice(0,l);
-        brd = setVal(st, mv.cell, mv.prv);  
+        let brd = setVal(st, mv.cell, mv.prv);  
         moves.push({ moveCount });
         setLocalStorage(brd, moves);
         return {...brd, insertVal: mv.insertVal, moves };
+    }
 
-    case RESET:
-        let rslt = resetBoard(st);
-        rslt = initState(rslt);
+    else if (typ === RESET) {
+        let rslt = newBoard(st);
+        rslt = {...rslt, ...initState};
         rslt.moves = [ { moveCount } ]; 
-        setLocalStorage(brd, moves);
+        setLocalStorage(rslt);
         return rslt;
+    }
 
-    case SETSTATE:
-        return {...st, ...action.props};
+    else if (typ === SETSTATE) {
+        let newst = {...st, ...action.props};
+        return newst;
+    }
 
-    default:
-        return st;
-    };
-
+    return st;
 };
 
 let Cell = React.createClass({
     render() {
-        let {board,cell} = this.props;
+        let {board,cell,completed} = this.props;
         let styl = cell_to_inner_rect(board,cell);
         styl.color = cell.isError ? 'red' : 'black';
-        //styl.backgroundColor = 'white';
+        styl.backgroundColor = cell.given ? 'lightgray' : completed ? 'LightGreen' : 'white';
         styl.position = 'absolute';
         styl.alignItems = 'center';
         styl.justifyContent = 'center'
         let txt = cell.val === 0 ? '' : cell.val.toString();
         //let txt = cell.id.toString();
         return (
-            <Flex auto style={styl} >
+            <Flex row auto style={styl} >
                 <div>{txt}</div>
             </Flex> );
 
@@ -572,18 +570,19 @@ let Cell = React.createClass({
 let Board = React.createClass({
 
     handleClick(e) {
-        let {dispatch, board, insertVal} = this.props;
-        if (insertVal === 0) return;  // finished
+        let {board} = this.props;
+        let {dispatch, insertVal, dayName, pos} = board;
         var node = ReactDOM.findDOMNode(this);
         var rect = node.getBoundingClientRect();
         let x = e.clientX - rect.left;
         let y = e.clientY - rect.top;
         let cell = pixel_to_cell(board,{x: x, y: y});
-        if (cell) dispatch( clickOnCell(board, cell) );
+        if (cell) dispatch( clickOnCell(board, cell, dayName, pos) );
     },
 
     render() {
-        let {board, insertVal} = this.props;
+        let {board} = this.props;
+        let completed = isCompleted(board);
         let divStyle = {
           width: board.width,
           height: board.height,
@@ -593,7 +592,7 @@ let Board = React.createClass({
 
         let cells = Object.keys(board.cells).map(function (k) {
             let c = board.cells[k]; 
-            return <Cell key={c.id} board={board} cell={c} /> ;
+            return <Cell key={c.id} board={board} cell={c} completed={completed} /> ;
          
         });
 
@@ -615,41 +614,26 @@ export let Hidato = React.createClass({
         };
     },
 
-    newGame() {
-        var xhr = new XMLHttpRequest();
-        //console.log("hidato puzzle requested");
-        xhr.open("GET", '/hidato');
-        xhr.onload = () => {
-            let json = JSON.parse(xhr.responseText);
-            //console.log("puzzle received : "+json.pubID);
-            this.props.dispatch({type: 'hidato/LOADBOARD', json: json, side: 30})
-        }
-        xhr.send();
+    dispatch(act) {
+        let {dayName, pos, dispatch} = this.props;
+        dispatch({...act, dayName, pos}); 
     },
 
-    componentWillMount() { this.initComponent(); },
-    //componentWillReceiveProps() { this.initComponent(); }, 
-    initComponent() {  
-        let {dayName, pos, dispatch} = this.props;
-        if (dayName === 'hidato') {
-            let pzl = dayName + "/" + pos;
-            let stg = localStorage.getItem('pseudoq.local.' + pzl);
-            if (stg) stg = JSON.parse(stg);
-            if (stg && !stg.completed) dispatch({type: SETSTATE, props: stg });
-            else this.newGame();
-            return;
+    componentWillMount() {  
+        let brd = this.props;
+        let {mode, pubID, dayName, pos, dispatch} = brd;
+        if (!pubID) brd = getLocalStorage(this.props);
+        if (!brd.pubID) this.newGame() ;
+        else { 
+            dispatch({type: LOADBOARD, dayName, pos, json: brd });
+            requestSolutions(brd.pubID, dayName, pos, dispatch);
         }
-        dispatch({type: LOADBOARD, side: 20, json: board });
     },
 
     componentDidMount () {
-        console.log("Hidato mounted");
-        let {mode, completed, pubID, dispatch} = this.props;
-        if (mode === 'play') {
-            if (pubID) requestSolutions(pubID, dispatch);
-            if (!completed ) {
-                this.setState({reSubmitTimer: window.setInterval(this.tick, 60000)});   // only submit a max of once a minute, upon next move.
-            }
+        let {mode} = this.props;
+        if (mode === 'play' && !isCompleted(this.props) ) {
+            this.setState({reSubmitTimer: window.setInterval(this.tick, 60000)});   // only submit a max of once a minute, upon next move.
         }
     },
 
@@ -659,21 +643,21 @@ export let Hidato = React.createClass({
     },
 
     tick() {
-        if (this.isMounted && !this.props.completed) this.props.dispatch({type: SETSTATE, props: {reSubmit: true} });
+        if (this.isMounted && !isCompleted(this.props)) this.dispatch({type: SETSTATE, props: {reSubmit: true} });
     },
 
     prevInsertVal() {
-        this.props.dispatch({type: PREVINSERTVAL});
+        this.dispatch({type: PREVINSERTVAL});
     },
 
     nextInsertVal() {
-        this.props.dispatch({type: NEXTINSERTVAL});
+        this.dispatch({type: NEXTINSERTVAL});
 
     },
 
     undo() {
         //console.log("dispatch undo")
-        this.props.dispatch({type: UNDO});
+        this.dispatch({type: UNDO});
     },
 
     newGame() {
@@ -681,24 +665,21 @@ export let Hidato = React.createClass({
         //console.log("hidato puzzle requested");
         xhr.open("GET", '/hidato');
         xhr.onload = () => {
-            let {dayName, pos, dispatch} = this.props;
-            let pzl = dayName + "/" + pos;
+            let pzl = "hidato/0";
             localStorage.removeItem('pseudoq.local.' + pzl);
             let json = JSON.parse(xhr.responseText);
-            json.dayName = dayName;
-            json.pos = pos;
             //console.log("puzzle received : "+json.pubID);
-            dispatch({type: 'hidato/LOADBOARD', json: json, side: 30})
+            this.dispatch({type: LOADBOARD, json, side: 30})
         }
         xhr.send();
     },
 
     check() {
-        this.props.dispatch({type: CHECK});
+        this.dispatch({type: CHECK});
     },
 
     reset() {
-        this.props.dispatch({type: RESET});
+        this.dispatch({type: RESET});
     },
 
     reviewSolution() {
@@ -706,11 +687,14 @@ export let Hidato = React.createClass({
     },
 
     render() {
-        console.log("rendering Hidato");
         let board = this.props;
-        if (!board.cells) return null;
-        if (!board.width) board = renderBoard(board,board.side);
-        let {direction,insertVal,moves, dispatch, mode} = board;
+        let {direction,insertVal,moves, mode} = board;
+        if (!direction) return null;
+
+        let completed = isCompleted(board);
+        console.log("rendering Hidato");
+        board = {...board, ...renderBoard(board, (mode === 'view' ? 20 : 30) ) };
+        console.log("renderBoard returned");
 
         let btnStyle = {
             width: '100%',
@@ -719,9 +703,9 @@ export let Hidato = React.createClass({
 
         let h2 = (
             <div style={{width: board.width}} >
-          <Flex row style={ {height: 30, paddingTop: 10} }>
-            <Flex col style={ {justifyContent: 'flex-start', paddingLeft: 10} } >Hidato</Flex>
-            <Flex col style={ {justifyContent: 'flex-end', paddingRight: 40} } >Rating : {board.rating}</Flex>
+          <Flex row style={ {justifyContent: 'space-between', height: 30, paddingTop: 10} }>
+            <div style={ {paddingLeft: 10} } >Hidato</div>
+            <div style={ {paddingRight: 10} } >Rating : Easy</div>
           </Flex>
             </div>
         );
@@ -731,9 +715,10 @@ export let Hidato = React.createClass({
         let rhcol = null;
         if (mode === 'view') {
             let {dayName, pos} = this.props;
+            let rt = "/" + dayName + "/" + pos;
             rhcol = (
                 <Flex column style={{justifyContent: 'flex-start', flex: "0 0 130px"}} >
-                    btns.push( <LinkContainer key='play' to={rt} ><Button  style={btnStyle} >Play</Button></LinkContainer> );
+                    <LinkContainer key='play' to={rt} ><Button  style={btnStyle} >Play</Button></LinkContainer>
                 </Flex>
                 );
         } else {
@@ -773,13 +758,14 @@ export let Hidato = React.createClass({
             );
         }
         let lhcol = (
-                <Board board={board} dispatch={dispatch} />
+                <Board board={board} />
             );
 
         let ftr = null;
         let helptext = null;
+        let solntbl = null;
         if (mode !== 'view') {
-            ftr = (insertVal === 0 && !hasErrors(board)) ?
+            ftr = completed ?
                 (
                 <div style={{width: board.width }}>
                     <Flex row style={ { justifyContent: 'center' } }>
@@ -800,6 +786,7 @@ export let Hidato = React.createClass({
                 </div> 
                 );
 
+            solntbl = ( <SolutionsTable board={ this } solutions={ this.props.solutions } /> );
             helptext = (
                 <div>
                   <h3>Rules</h3>
@@ -847,7 +834,7 @@ export let Hidato = React.createClass({
                     { rhcol }
               </Flex>
               { ftr }
-              <SolutionsTable board={ this } solutions={ this.props.solutions } />
+              { solntbl }
               { helptext }
             </div>
         );

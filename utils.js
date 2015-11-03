@@ -1,8 +1,8 @@
 "use strict";
 
 export function solutionSorter(a,b) { 
-    let ma = a.doc.moves;
-    let mb = b.doc.moves;
+    let ma = a.moves;
+    let mb = b.moves;
     let acnt = ma[ma.length - 1].moveCount;
     let bcnt = mb[mb.length - 1].moveCount;
     return acnt > bcnt;

@@ -23,7 +23,7 @@ var SolutionsTable = React.createClass({
         if (solns.length === 0) return null;
 
         solns.forEach(function (soln) {
-            var mvs = soln.doc.moves;
+            var mvs = soln.moves;
             var lp = soln.lastPlay;
             var dt = oxidate.parse(lp);
             var lastplay = oxidate.toFormat(dt, "DDDD, MMMM D @ HH:MI");
@@ -32,7 +32,7 @@ var SolutionsTable = React.createClass({
             if (compl === "no" && soln.percentCompleted) {
               compl = soln.percentCompleted.toString() + "%";
             }
-            var cnt = mvs[mvs.length-1].moveCount;
+            var cnt = mvs ? mvs[mvs.length-1].moveCount : 0; 
             let reviewSolution = function() {
                 board.reviewSolution(mvs);
             }

@@ -173,6 +173,7 @@ export function upsert_solution(soln) {
     return where(db.solutions, 'puzzle=$1 and "user"=$2',[soln.puzzle,soln.user]).then( rslt => {
         //console.log("solutions found : "+rslt.length);
         if (rslt.length > 0) {
+            if (rslt[0].completed) return {ok:true, msg: 'already completed'};
             soln.solnId = rslt[0].solnId;
             return update(db.solutions, soln);
         } else {
@@ -252,14 +253,14 @@ let csql =
 +   '     select "date",pos,puzzle from days'
 +   '     where "date" <= $1 and "date" > $2'
 +   '     )'
-+   ' select pids."date", pids.pos, p.*, s2.moves'
++   ' select pids."date", pids.pos, p.*, s2.doc'
 +   ' from pids '
 +   ' left join puzzles p on pids.puzzle = p."puzzleId"'
-+   ' left join (select puzzle, doc as moves from solutions s where s.user = $3) s2 on p."puzzleId" = s2.puzzle'
++   ' left join (select puzzle, doc from solutions s where s.user = $3) s2 on p."puzzleId" = s2.puzzle'
 +   ' order by pids.date desc,pids.pos '
 ;
     let dt1 = oxiDate.toFormat( oxiDate.addDays(dt, 7), 'yyyyMMdd' );
-    let dt2 = oxiDate.toFormat( oxiDate.addDays(dt, -7), 'yyyyMMdd' );
+    let dt2 = oxiDate.toFormat( oxiDate.addDays(dt, -8), 'yyyyMMdd' );
     return query(csql,[dt1, dt2, uid]);
 };
 

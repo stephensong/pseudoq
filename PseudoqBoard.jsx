@@ -39,6 +39,381 @@ vals.forEach( function(i) {
     defaultAvail[i] = false; 
 });
 
+function newPickers() { return [false,false,false,false,false,false,false,false,false,false]; };
+
+function newModel(cols,rows) {
+    let mdl = Object.create(null);
+    cols.forEach( function(c) {
+        rows.forEach( function(r) {
+            let trues = Object.create(null)
+            vals.forEach( function(i) {
+                trues[i] = true;
+            });
+            mdl[c+r] = trues;
+        });
+    }); 
+    mdl.comment = '';
+    mdl.moveCount = 0;
+    return mdl;
+};
+
+const inactives = [
+      "J1", "K1", "L1", "J2", "K2", "L2", "J3", "K3", "L3",
+      "J4", "K4", "L4", "J5", "K5", "L5", "J6", "K6", "L6",
+      "J16", "K16", "L16", "J17", "K17", "L17", "J18", "K18", "L18",
+      "J19", "K19", "L19", "J20", "K20", "L20", "J21", "K21", "L21",
+      "A10", "B10", "C10", "D10", "E10", "F10", "P10", "Q10", "R10", "S10", "T10", "U10",
+      "A11", "B11", "C11", "D11", "E11", "F11", "P11", "Q11", "R11", "S11", "T11", "U11",
+      "A12", "B12", "C12", "D12", "E12", "F12", "P12", "Q12", "R12", "S12", "T12", "U12" ];
+
+function isCellActive(id) {
+    return inactives.indexOf(id) < 0;
+};
+
+function isCompleted(mdl, board) {
+    let soln = board.solution;
+    return board.cols.every( c => {
+        return board.rows.every( r => {
+            let id = c+r;
+            let ps = mdl[id];
+            let chk = soln[id];
+            return !isCellActive(id) || ( typeof ps !== 'object' ? ps === chk : vals.every( function (i) { return i === chk ? ps[i] : !ps[i]; }) );
+        });
+    });
+};
+
+function createModel(prnt) {
+    let mdl = Object.create(prnt);
+    mdl.comment = '';
+    mdl.moveCount = prnt.moveCount + 1;
+    return mdl;
+};
+
+function constructMoves(mdl,storeModel) {
+    let _cons = function _cons(mdl,storeModel) {
+        let prnt = Object.getPrototypeOf(mdl);
+        if (!prnt) return [];
+        let rslt = Object.getPrototypeOf(prnt) ? _cons(prnt,storeModel) : [];
+        let pstr = function(ps) {
+            let trslt = '';
+            if (typeof ps === 'object') vals.forEach( function(i) { if (ps[i]) { trslt += i.toString(); } } );
+            else trslt = ps.toString();
+            return trslt;
+        };
+        let a = {};
+        Object.keys(mdl).forEach( function(c) {
+            if (mdl[c]) {
+                let s = pstr(mdl[c]);
+                if (s.length < 9) a[c] = pstr(mdl[c]);
+            }
+        });
+        a.comment = mdl.comment; 
+        a.moveCount = mdl.moveCount;
+        if (storeModel) {
+            let t = {}
+            t.model = prnt;
+            t.move = a;
+            a = t;
+        }
+        rslt.push(a);
+        return rslt;
+    }
+    let rslt = _cons(mdl,storeModel);
+    if (storeModel) rslt.push({model: mdl, move: {dummy: true, comment: '', moveCount: mdl.moveCount}});
+    return rslt;
+
+};
+
+let initState = {
+    pickers: newPickers(),
+    selectedCells: [],
+    mode: 'view',
+    model: undefined,
+    autoEliminate: true,
+    autoPromote: false,
+    focusCell: undefined,
+    moveComment: '',
+    moveIndex: -1,   // currently only used in review mode
+    savedMoveCount: 0,
+    savedModel: undefined,
+    moves: [], 
+    solutions: [],
+    reSubmit: false,
+    completed: false,
+    pickerPanelPos: 'top',
+    unitsize: 54,
+    layoutNo: 1,
+    timer: null,
+    colorTag: 'Transparent'
+};
+
+function getLocalStorage(props) {
+    console.log("getLocalStorage called");
+    let {dayName, pos, pubID} = props;
+    let pzl = dayName + "/" + pos;
+    let mvs = localStorage.getItem('pseudoq.local.' + pzl);
+    let bmvs = props.moves;
+    if (mvs) {
+        mvs = JSON.parse(mvs);
+        if (mvs.pubID !== pubID) mvs = null;
+    }
+    let a = mvs && mvs.length > 0 ? mvs[mvs.length - 1].moveCount : -1; 
+    let b = bmvs && bmvs.length > 0 ? bmvs[bmvs.length - 1].moveCount : -1; 
+    if (b > a) mvs = bmvs;
+    return mvs;
+}
+
+function applyMoveToModel(orgmdl,m) {
+    let mdl = createModel(orgmdl);
+    Object.keys(m).forEach( function(cid) {
+        if (cid !== 'moveCount' && cid != 'comment' && cid != 'user' && mdl[cid]) {
+            let oks = m[cid];
+            if (oks.length === 1) {
+                mdl[cid] = parseInt(oks);
+            } else {
+                let ps = Object.create(null)
+                vals.forEach( function(i) {
+                    let c = i.toString();
+                    ps[i] = oks.indexOf(c) >= 0;
+                });
+                mdl[cid] = ps;
+            }
+        }
+    }); 
+    mdl.comment = m.comment;
+    mdl.moveCount = m.moveCount;
+    mdl.user = m.user;
+    return mdl;
+};
+
+function applyMovesToModel(org, mvs) {
+    let mdl = org;   
+    mvs.forEach( m => { mdl = applyMoveToModel(mdl,m); });
+    return mdl;
+};
+
+function initRegions(cols,rows) {
+    let regs = []
+    let sz = rows.length;
+    let origs =  sz === 9 ? [ [0,0 ] ]
+                          : [ [6,6], [0,0], [0,12], [12,0], [12,12] ];
+
+    origs.forEach( function(e) {
+        let x = e[0], y = e[1];
+        let cid;
+        let reg;
+        for (let c = 0; c < 9; c++) {
+            reg = []; 
+            for (let r = 0; r < 9; r++) {
+                cid = cols[x+c] + rows[y+r]
+                reg.push(cid);
+            };
+            regs.push(reg)
+        }; 
+
+        for (let r = 0; r < 9; r++) {
+            reg = []; 
+            for (let c = 0; c < 9; c++) {
+                cid = cols[x+c] + rows[y+r]
+                reg.push(cid);
+            };
+            regs.push(reg)
+        }; 
+
+        let a = [0,1,2];
+
+        for (let n = 0; n < 9; n++) {
+            let x0 = ( n % 3 ) * 3;
+            let y0 = Math.floor( n / 3 ) * 3;
+            reg = [];
+            a.forEach( function (i) {
+                a.forEach( function (j) {
+                    cid = cols[x+x0+i] + rows[y+y0+j]
+                    reg.push(cid);
+                });
+            });
+            regs.push(reg); 
+
+        };
+    });
+
+    return regs;
+
+};
+
+
+let renderBoard = function(brd,unitsize,mode) {
+    let ky = brd.pubID.toString() + unitsize + (mode === 'view' ? '1' : '0') + (mode === 'completed' ? '1' : '0') ;
+    let cUrl = renderedBoards[ky];
+
+    if (!cUrl) {
+        let boardsize = brd.cols.length;
+        let board = {...brd, unitsize};
+        let dim = boardsize * unitsize + 1; 
+        board.showTotals = mode !== 'view';
+
+       if (mode === 'completed') {
+            board.clrBackGround = board.clrGreen;
+            board.lineColor = 'black';
+        } else {
+            delete board.clrBackGround;
+            delete board.lineColor;
+        }
+
+        console.log('rendering : '+mode);
+        let d = grph.Drawer(board);
+        let canvas = d.drawLayout();
+        cUrl = canvas.toDataURL();
+        renderedBoards[ky] = cUrl;
+    }
+    return cUrl;
+}
+
+function reviewGoto(brd, i,mvs,st) {
+    //console.log('goto : '+i);
+    st = st || {};
+    let props = {...brd, ...st}
+    mvs = mvs || props.moves;
+    mvs[props.moveIndex].move.comment = props.moveComment;
+    if (i < 0 || i >= mvs.length) return;
+    let mv = mvs[i];
+    let sels = [];
+    let pkrs = newPickers();
+    let mdl = mv.model;
+
+    Object.keys(mv.move).forEach( function(cid) {
+        if (cid !== 'comment' && cid !== 'moveCount' && mdl[cid]) sels.push(cid);
+    });
+
+
+    vals.forEach( function(i) { 
+        sels.forEach( function(cid) { 
+            let ps = mdl[cid];
+            if (typeof ps === 'object') {
+                if (!pkrs[i] && ps[i]) pkrs[i] = true; 
+            }
+        });
+    });
+
+    sels.forEach( function(cid) {
+        let ps = mv.move[cid];
+        vals.forEach( function(i) {
+            if (ps.indexOf(i) >= 0 ) {
+                pkrs[i] = false;
+            };
+        });
+    });
+
+    return {...props, moves: mvs, model: mdl, moveComment: mv.move.comment || '', selectedCells: sels, pickers: pkrs, moveIndex: i};
+};
+
+function reviewSolution(a, board) {
+    let mdl = newModel(board.cols,board.rows);
+    mdl = applyMovesToModel(mdl,a);
+    let mvs = constructMoves(mdl, true);
+    let cmt = mvs.length === 0 ? '' : mvs[0].move.comment;
+    let savmdl = board.model || mdl;
+    let cnt = savmdl.moveCount || 0;
+    let brd = {...board, moves: mvs, model: mvs[0].model, moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: savmdl};
+    return reviewGoto(brd,0)
+}
+
+function loadComponent(st, props) {
+    console.log('loadComponent');
+    let strt = new Date();
+    let mode = props.mode || 'view' ;
+    let mvs = props.random ? null : mode === 'reviewSolution' ? props.initMoves : getLocalStorage(props);
+
+    let brd = {...props};
+
+    let sz = parseInt(brd.size)
+    let rows = [];
+    let cols = [];
+    for (let i = 1; i <= sz; ++i) {
+        rows.push(i);
+        cols.push(String.fromCharCode(64+i));
+    }
+
+    brd.cols = cols;
+    brd.rows = rows;
+    let regs = [];
+    let autoEliminate = true;
+    let layoutNo = 1;
+
+    regs = initRegions(cols,rows)
+    Object.keys(brd.regions).forEach(r => regs.push(r.split(":")) );
+    let svd = localStorage.getItem('pseudoq.settings.' + sz );
+    if (svd) brd.unitsize = parseInt(svd);
+    let svdauto = localStorage.getItem('pseudoq.settings.autoEliminate');
+    if (svdauto) autoEliminate = (svdauto === 'true');
+    let svdlno = localStorage.getItem('pseudoq.settings.layoutNo')
+    if (svdlno) layoutNo = parseInt(svdlno);
+
+    brd.clrBackGround = "White";
+    brd.clrForeGround = "Black";
+    brd.clrRed = "Red";
+    brd.clrGreen = "LightGreen";
+    brd.clrYellow = "Yellow";
+    brd.clrBlue = '#64E8E2';
+    brd.clrPurple = '#CE2DB3';
+
+    let gt = brd.lessThans || brd.equalTos;
+    brd.gameType = sz == 21 ? ( gt ? "Assassin" : "Samurai")
+                            : ( gt ? "Ninja" : "Killer");
+
+    
+    if (mode === 'reviewSolution') {
+        brd = reviewSolution(mvs,brd);
+        mvs = null;
+    }
+    else {
+        let mdl = newModel(cols,rows);
+        if (mvs) mdl = applyMovesToModel(mdl, mvs);
+        brd.model = mdl;
+    }
+    let rslt = {...initState, ...st, ...brd, boardsize: rows.length, allRegions: regs, autoEliminate, layoutNo, completed: false};
+    if (mvs) {
+        if (mode === 'review') {  // untested at this stage
+            rslt.moves = constructMoves(mdl, true);
+            rslt.moveIndex = 0;
+            rslt.moveComment = st.moves[0].move.comment;
+            rslt.model = st.moves[0].model;
+        } 
+        else rslt.completed = isCompleted(brd.model, brd);
+
+    }
+
+    return rslt;
+};
+
+
+const LOAD = 'psq/LOAD';
+const POSTMODEL = 'psq/POSTMODEL';
+const POSTSTATE = 'psq/POSTSTATE';
+
+export function psqReducer(state = initState, action) {
+
+    let typ = action.type;
+    if (typ === LOAD) {
+        let brd = loadComponent(state, action.props)
+        return brd;
+
+    } 
+    else if (typ === POSTMODEL) {
+        return {...state, 
+                model: action.model,
+                pickers: newPickers(),
+                selectedCells: [],
+                moveComment: '',
+                ...action.newst,
+                };
+    } 
+    else if (typ === POSTSTATE) {
+        return {...state, ...action.newst };
+    }
+    return state;
+}
+
 
 let CheckModal = React.createClass({
 
@@ -286,7 +661,7 @@ let Timer = React.createClass({
 
     tick(){
         if (!this.props.timer.isPaused()) {
-            this.postState({elapsed: this.props.timer.elapsed()});
+            this.setState({elapsed: this.props.timer.elapsed()});
         }        
     },
 
@@ -346,325 +721,6 @@ let Progress = React.createClass({
 });
 
 
-function newPickers() { return [false,false,false,false,false,false,false,false,false,false]; };
-
-function newModel(cols,rows) {
-    let mdl = Object.create(null);
-    cols.forEach( function(c) {
-        rows.forEach( function(r) {
-            let trues = Object.create(null)
-            vals.forEach( function(i) {
-                trues[i] = true;
-            });
-            mdl[c+r] = trues;
-        });
-    }); 
-    mdl.comment = '';
-    mdl.moveCount = 0;
-    return mdl;
-};
-
-const inactives = [
-      "J1", "K1", "L1", "J2", "K2", "L2", "J3", "K3", "L3",
-      "J4", "K4", "L4", "J5", "K5", "L5", "J6", "K6", "L6",
-      "J16", "K16", "L16", "J17", "K17", "L17", "J18", "K18", "L18",
-      "J19", "K19", "L19", "J20", "K20", "L20", "J21", "K21", "L21",
-      "A10", "B10", "C10", "D10", "E10", "F10", "P10", "Q10", "R10", "S10", "T10", "U10",
-      "A11", "B11", "C11", "D11", "E11", "F11", "P11", "Q11", "R11", "S11", "T11", "U11",
-      "A12", "B12", "C12", "D12", "E12", "F12", "P12", "Q12", "R12", "S12", "T12", "U12" ];
-
-function isCellActive(id) {
-    return inactives.indexOf(id) < 0;
-};
-
-function isCompleted(mdl, board) {
-    let soln = board.solution;
-    return board.cols.every( c => {
-        return board.rows.every( r => {
-            let id = c+r;
-            let ps = mdl[id];
-            let chk = soln[id];
-            return !isCellActive(id) || ( typeof ps !== 'object' ? ps === chk : vals.every( function (i) { return i === chk ? ps[i] : !ps[i]; }) );
-        });
-    });
-};
-
-function createModel(prnt) {
-    let mdl = Object.create(prnt);
-    mdl.comment = '';
-    mdl.moveCount = prnt.moveCount + 1;
-    return mdl;
-};
-
-function constructMoves(mdl,storeModel) {
-    let _cons = function _cons(mdl,storeModel) {
-        let prnt = Object.getPrototypeOf(mdl);
-        if (!prnt) return [];
-        let rslt = Object.getPrototypeOf(prnt) ? _cons(prnt,storeModel) : [];
-        let pstr = function(ps) {
-            let trslt = '';
-            if (typeof ps === 'object') vals.forEach( function(i) { if (ps[i]) { trslt += i.toString(); } } );
-            else trslt = ps.toString();
-            return trslt;
-        };
-        let a = {};
-        Object.keys(mdl).forEach( function(c) {
-            if (mdl[c]) {
-                let s = pstr(mdl[c]);
-                if (s.length < 9) a[c] = pstr(mdl[c]);
-            }
-        });
-        a.comment = mdl.comment; 
-        a.moveCount = mdl.moveCount;
-        if (storeModel) {
-            let t = {}
-            t.model = prnt;
-            t.move = a;
-            a = t;
-        }
-        rslt.push(a);
-        return rslt;
-    }
-    let rslt = _cons(mdl,storeModel);
-    if (storeModel) rslt.push({model: mdl, move: {dummy: true, comment: '', moveCount: mdl.moveCount}});
-    return rslt;
-
-};
-
-let initState = {
-    pickers: newPickers(),
-    selectedCells: [],
-    mode: 'view',
-    model: undefined,
-    autoEliminate: true,
-    autoPromote: false,
-    focusCell: undefined,
-    moveComment: '',
-    moveIndex: -1,   // currently only used in review mode
-    savedMoveCount: 0,
-    savedModel: undefined,
-    moves: [], 
-    solutions: [],
-    reSubmit: false,
-    completed: false,
-    pickerPanelPos: 'top',
-    unitsize: 54,
-    layoutNo: 1,
-    timer: null,
-    colorTag: 'Transparent'
-};
-
-function getLocalStorage(props) {
-    console.log("getLocalStorage called");
-    let {dayName, pos, pubID} = props;
-    let pzl = dayName + "/" + pos;
-    let mvs = localStorage.getItem('pseudoq.local.' + pzl);
-    let bmvs = props.moves;
-    if (mvs) {
-        mvs = JSON.parse(mvs);
-        if (mvs.pubID !== pubID) mvs = null;
-        else mvs = mvs.moves;
-    }
-    if (bmvs) bmvs = bmvs.moves;
-    let a = mvs && mvs.length > 0 ? mvs[mvs.length - 1].moveCount : -1; 
-    let b = bmvs && bmvs.length > 0 ? bmvs[bmvs.length - 1].moveCount : -1; 
-    if (b > a) mvs = bmvs;
-    return mvs;
-}
-
-function applyMoveToModel(orgmdl,m) {
-    let mdl = createModel(orgmdl);
-    Object.keys(m).forEach( function(cid) {
-        if (cid !== 'moveCount' && cid != 'comment' && cid != 'user' && mdl[cid]) {
-            let oks = m[cid];
-            if (oks.length === 1) {
-                mdl[cid] = parseInt(oks);
-            } else {
-                let ps = Object.create(null)
-                vals.forEach( function(i) {
-                    let c = i.toString();
-                    ps[i] = oks.indexOf(c) >= 0;
-                });
-                mdl[cid] = ps;
-            }
-        }
-    }); 
-    mdl.comment = m.comment;
-    mdl.moveCount = m.moveCount;
-    mdl.user = m.user;
-    return mdl;
-};
-
-function applyMovesToModel(org, mvs) {
-    let mdl = org;   
-    mvs.forEach( m => { mdl = applyMoveToModel(mdl,m); });
-    return mdl;
-};
-
-function initRegions(cols,rows) {
-    let regs = []
-    let sz = rows.length;
-    let origs =  sz === 9 ? [ [0,0 ] ]
-                          : [ [6,6], [0,0], [0,12], [12,0], [12,12] ];
-
-    origs.forEach( function(e) {
-        let x = e[0], y = e[1];
-        let cid;
-        let reg;
-        for (let c = 0; c < 9; c++) {
-            reg = []; 
-            for (let r = 0; r < 9; r++) {
-                cid = cols[x+c] + rows[y+r]
-                reg.push(cid);
-            };
-            regs.push(reg)
-        }; 
-
-        for (let r = 0; r < 9; r++) {
-            reg = []; 
-            for (let c = 0; c < 9; c++) {
-                cid = cols[x+c] + rows[y+r]
-                reg.push(cid);
-            };
-            regs.push(reg)
-        }; 
-
-        let a = [0,1,2];
-
-        for (let n = 0; n < 9; n++) {
-            let x0 = ( n % 3 ) * 3;
-            let y0 = Math.floor( n / 3 ) * 3;
-            reg = [];
-            a.forEach( function (i) {
-                a.forEach( function (j) {
-                    cid = cols[x+x0+i] + rows[y+y0+j]
-                    reg.push(cid);
-                });
-            });
-            regs.push(reg); 
-
-        };
-    });
-
-    return regs;
-
-};
-
-
-let renderBoard = function(brd,unitsize,mode) {
-    let ky = brd.pubID.toString() + unitsize + (mode === 'view' ? '1' : '0') + (mode === 'completed' ? '1' : '0') ;
-    let cUrl = renderedBoards[ky];
-
-    if (!cUrl) {
-        let boardsize = brd.cols.length;
-        let board = {...brd, unitsize};
-        let dim = boardsize * unitsize + 1; 
-        board.showTotals = mode !== 'view';
-
-       if (mode === 'completed') {
-            board.clrBackGround = board.clrGreen;
-            board.lineColor = 'black';
-        } else {
-            delete board.clrBackGround;
-            delete board.lineColor;
-        }
-
-        console.log('rendering : '+mode);
-        let d = grph.Drawer(board);
-        let canvas = d.drawLayout();
-        cUrl = canvas.toDataURL();
-        renderedBoards[ky] = cUrl;
-    }
-    return cUrl;
-}
-
-function loadComponent(st, props) {
-    console.log('loadComponent');
-    let strt = new Date();
-    let mode = props.mode || 'view' ;
-    let mvs = props.random ? null : mode === 'reviewSolution' ? props.initMoves : getLocalStorage(props);
-
-    let brd = {...props};
-    let sz = parseInt(brd.size)
-    let rows = [];
-    let cols = [];
-    for (let i = 1; i <= sz; ++i) {
-        rows.push(i);
-        cols.push(String.fromCharCode(64+i));
-    }
-
-    brd.cols = cols;
-    brd.rows = rows;
-    let regs = [];
-    let autoEliminate = true;
-    let layoutNo = 1;
-
-    regs = initRegions(cols,rows)
-    Object.keys(brd.regions).forEach(r => regs.push(r.split(":")) );
-    let svd = localStorage.getItem('pseudoq.settings.' + sz );
-    if (svd) brd.unitsize = parseInt(svd);
-    let svdauto = localStorage.getItem('pseudoq.settings.autoEliminate');
-    if (svdauto) autoEliminate = (svdauto === 'true');
-    let svdlno = localStorage.getItem('pseudoq.settings.layoutNo')
-    if (svdlno) layoutNo = parseInt(svdlno);
-
-    brd.clrBackGround = "White";
-    brd.clrForeGround = "Black";
-    brd.clrRed = "Red";
-    brd.clrGreen = "LightGreen";
-    brd.clrYellow = "Yellow";
-    brd.clrBlue = '#64E8E2';
-    brd.clrPurple = '#CE2DB3';
-
-    let gt = brd.lessThans || brd.equalTos;
-    brd.gameType = sz == 21 ? ( gt ? "Assassin" : "Samurai")
-                            : ( gt ? "Ninja" : "Killer");
-
-    let mdl = newModel(cols,rows);
-    if (mvs) mdl = applyMovesToModel(mdl, mvs);
-    let rslt = {...initState, ...st, ...brd, model: mdl, boardsize: rows.length, allRegions: regs, autoEliminate, layoutNo, completed: false};
-    if (mvs) {
-        if (mode.indexOf('review') >= 0) {
-            rslt.moves = constructMoves(mdl, true);
-            rslt.moveIndex = 0;
-            rslt.moveComment = st.moves[0].move.comment;
-            rslt.model = st.moves[0].model;
-        } 
-        else rslt.completed = isCompleted(mdl, brd);
-
-    }
-
-    return rslt;
-};
-
-
-const LOAD = 'psq/LOAD';
-const POSTMODEL = 'psq/POSTMODEL';
-const POSTSTATE = 'psq/POSTSTATE';
-
-export function psqReducer(state = initState, action) {
-
-    let typ = action.type;
-    if (typ === LOAD) {
-        let brd = loadComponent(state, action.props)
-        return brd;
-
-    } 
-    else if (typ === POSTMODEL) {
-        return {...state, 
-                model: action.model,
-                pickers: newPickers(),
-                selectedCells: [],
-                moveComment: '',
-                ...action.newst,
-                };
-    } 
-    else if (typ === POSTSTATE) {
-        return {...state, ...action.newst };
-    }
-    return state;
-}
-
 export let PseudoqBoard = React.createClass({ 
 
     getInitialState() {
@@ -677,7 +733,7 @@ export let PseudoqBoard = React.createClass({
         cmt = cmt || this.props.moveComment || '';
         st = st || {}
         model.comment = cmt;
-        let mode = this.props.mode;
+        let {mode, dayName, pos} = this.props;
         if (mode === 'play' || mode == 'review') {
             let board = this.props;
             let mdl = model;
@@ -713,15 +769,13 @@ export let PseudoqBoard = React.createClass({
                 }
             }
         }
-        let act = {type: POSTMODEL, model, newst: st}
+        let act = {type: POSTMODEL, model, newst: st, dayName, pos}
         this.props.dispatch(act);
     },
 
-    componentDidUpdate(prevProps, prevState) {
-    },
-
     postState(newst) {
-        this.props.dispatch({type: POSTSTATE, newst});
+        let {dispatch, dayName, pos} = this.props;
+        dispatch({type: POSTSTATE, newst, dayName, pos });
     },
 
     hasSolution() {
@@ -1074,56 +1128,21 @@ export let PseudoqBoard = React.createClass({
         let mvs = constructMoves(mdl, true);
         let cmt = mvs.length === 0 ? '' : mvs[0].move.comment;
         let cnt = mdl.moveCount;
-        this.postState({mode: 'review', moves: mvs, moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: mdl}, this.reviewFirst);
+        this.reviewGoto(0, mvs, {mode: 'review', moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: mdl});
+        //this.reviewFirst();
     },
 
     reviewSolution(a) {
-        let board = this.props;
-        let mdl = newModel(board.cols,board.rows);
-        mdl = applyMovesToModel(mdl,a);
-        let mvs = constructMoves(mdl, true);
-        let cmt = mvs.length === 0 ? '' : mvs[0].move.comment;
-        let savmdl = this.props.model;
-        let cnt = savmdl.moveCount;
-        this.postState({mode: 'reviewSolution', moves: mvs, moveIndex: 0, moveComment: cmt, savedMoveCount: cnt, savedModel: savmdl}, this.reviewFirst);
+        let board = reviewSolution(a,this.props)
+        this.reviewGoto(0, board.move, {...board, mode: 'reviewSolution'});
     },
 
-    reviewGoto(i,mvs) {
+    reviewGoto(i,mvs,st) {
         //console.log('goto : '+i);
-        mvs = mvs || this.props.moves;
-        mvs[this.props.moveIndex].move.comment = this.props.moveComment;
-        if (i < 0 || i >= mvs.length) return;
-        let mv = mvs[i];
-        let sels = [];
-        let pkrs = newPickers();
-        let mdl = mv.model;
-
-        Object.keys(mv.move).forEach( function(cid) {
-            if (cid !== 'comment' && cid !== 'moveCount' && mdl[cid]) sels.push(cid);
-        });
-
-
-        vals.forEach( function(i) { 
-            sels.forEach( function(cid) { 
-                let ps = mdl[cid];
-                if (typeof ps === 'object') {
-                    if (!pkrs[i] && ps[i]) pkrs[i] = true; 
-                }
-            });
-        });
-
-        sels.forEach( function(cid) {
-            let ps = mv.move[cid];
-            vals.forEach( function(i) {
-                if (ps.indexOf(i) >= 0 ) {
-                    pkrs[i] = false;
-                };
-            });
-        });
-        this.postState({model: mdl, moveComment: mv.move.comment || '', selectedCells: sels, pickers: pkrs, moveIndex: i});
+        let newst = reviewGoto(this.props,i,mvs,st);
+        this.postState(newst);
     },
 
-/*
     reviewLoad() {
         let a = this.props.moves;
         a[this.props.moveIndex].move.comment = this.props.moveComment;
@@ -1132,11 +1151,10 @@ export let PseudoqBoard = React.createClass({
         let moves = a.map( function(mv) { return mv.move; } );
         moves.splice(moves.length - 1,1);
         let mdl = a[0].model;
-        mdl = this.applyMovesToModel(mdl, moves);
+        mdl = applyMovesToModel(mdl, moves);
         mdl.moveCount += cnt;
-        this.setModelState(mdl, '', this.play );
+        this.setModelState(mdl, null, {mode: 'play', savedModel: undefined, savedMoveCount: 0 });
     },
-*/
 
     reviewReturn() {
         let mdl = this.props.savedModel;
@@ -1188,7 +1206,7 @@ export let PseudoqBoard = React.createClass({
         rslt.lastPlay = new Date();
         if (a && a.length > 0) {
             let mvs = a.map( function(mv) { return mv.move; } );
-            rslt.doc = {moves: mvs};
+            rslt.moves = mvs;
             let mv = a[mvs.length - 1];
             rslt.moveCount = mv.moveCount;
             let {points, total} = this.completionPoints(mv.model);
@@ -1196,7 +1214,7 @@ export let PseudoqBoard = React.createClass({
             rslt.percentCompleted = Math.round(100 * points / total);
             if (timeOut) rslt.points = points;
         } else {
-            rslt.doc = {moves: []};
+            rslt.moves = [];
             rslt.moveCount = 0;
             rslt.percentCompleted = 0;
             //rslt.secondsElapsed = 0;
@@ -1229,7 +1247,7 @@ export let PseudoqBoard = React.createClass({
             let rsp = JSON.parse(xhr.responseText);
             if (rsp.ok) {
 
-                let {dayName, pos, timeOut} = this.props;
+                let {timeOut} = this.props;
                 if (timeOut) {
                     let rslts = rsp.results ;
                     this.postState({solutions: rslts});  // lazy kludge?
@@ -1299,25 +1317,9 @@ export let PseudoqBoard = React.createClass({
         this.setModelState(mdl);
     },
 
-    getLocalStorage() {
-        let {dayName, pos, brdJson} = this.props;
-        let pzl = dayName + "/" + pos;
-        let mvs = localStorage.getItem('pseudoq.local.' + pzl);
-        let bmvs = brdJson.moves;
-        if (mvs) {
-            mvs = JSON.parse(mvs);
-            if (mvs.pubID !== brdJson.pubID) mvs = null;
-            else mvs = mvs.moves;
-        }
-        if (bmvs) bmvs = bmvs.moves;
-        let a = mvs && mvs.length > 0 ? mvs[mvs.length - 1].moveCount : -1; 
-        let b = bmvs && bmvs.length > 0 ? bmvs[bmvs.length - 1].moveCount : -1; 
-        if (b > a) mvs = bmvs;
-        return mvs;
-    },
-
     setLocalStorage(mvs) {
-        let {dayName, pos} = this.props;
+        let {dayName, pos, mode} = this.props;
+        if (mode !== 'play') return;
         let pzl = dayName + "/" + pos;
         localStorage.setItem('pseudoq.local.' + pzl, mvs);
     },
@@ -1345,14 +1347,14 @@ export let PseudoqBoard = React.createClass({
 
     componentWillMount() {  
         console.log('ComponentWillMount Board');
-        this.props.dispatch( {type: LOAD, props: this.props});
+        let {dispatch, dayName, pos} = this.props;
+        dispatch( {type: LOAD, dayName, pos, props: this.props});
     },
 
     componentDidMount() {
-        //console.log("PseudoqBoard mounted");
+
         let {mode,completed,random} = this.props;
-        if (mode.indexOf('review') >= 0) this.reviewFirst();
-        else if (mode === 'play') {
+        if (mode === 'play') {
             this.requestSolutions();
             if (!completed ) {
                 if (random) this.postState({timer: new oxiDate.pauseableTimer() });
@@ -1389,11 +1391,8 @@ export let PseudoqBoard = React.createClass({
         console.log("rendering board"); 
         let board = {...this.props};
         let {dayName, pos, mode, model, pickers, selectedCells, layoutNo, pickerPanelPos} = board;
-        if (!model || mode === 'hide') {
-             return null;
-        }
-        //let mvs = this.getLocalStorage();
-        //let timeElapsed = mode === 'play' ? this.getSecondsElapsed() : 0; 
+        if (!model || mode === 'hide') return null;
+
         let sz = board.cols.length;
         let unitsize = 
             mode === 'view' ? 36 
@@ -1401,7 +1400,7 @@ export let PseudoqBoard = React.createClass({
             : 45;
 
         board.unitsize = unitsize;
-        let completed = isCompleted(model, board);
+        let completed = !mode.startsWith('review') && isCompleted(model, board);
 
         board.cellSize = unitsize * (21 / 36);
         board.possSize = board.cellSize / 3;
@@ -1530,7 +1529,7 @@ export let PseudoqBoard = React.createClass({
         if (mode === 'play') {
             if (this.props.timeOut) {
                 if (completed && this.checkForErrors()) points = 0;
-                btns.push( <Button key='tryagain' bsSize='small' onClick={this.reload} block >Try Again</Button>);
+                btns.push( <Button key='tryagain' bsSize='small' onClick={this.props.newGame} block >New Game</Button>);
                 btns.push( <Button key='undo' bsSize='small' onClick={this.undo} block >Undo</Button> );
             } else {
                 btns.push( <Button key='undo' bsSize='small' onClick={this.undo} block >Undo</Button> );

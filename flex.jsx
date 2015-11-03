@@ -51,7 +51,7 @@ function mixProps(props) {
 
 let Flex = React.createClass({displayName: 'Flex',
   render() {
-    const style = mixProps(this.props);
+    let style = mixProps(this.props);
     return <div {...this.props} style={style}>{this.props.children}</div>;
   }
 });

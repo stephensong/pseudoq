@@ -1,13 +1,13 @@
 "use strict";
 
 var React = require('react');
-var Board = require('PseudoqBoard.jsx');
+import {PseudoqBoard} from 'PseudoqBoard.jsx';
+
 
 var Help = React.createClass({
 
     render: function() {
-        let board = this.props.board ? ( <Board dayName='Tutorial' pos='0' brdJson={ this.props.board } initmode='reviewSolution' initMoves={ this.props.board.moves } /> )
-                                     : null;
+        let board = ( <PseudoqBoard { ...this.props.board } dayName='tutorial' pos={ 0 } dispatch={ this.props.dispatch } mode='reviewSolution' initMoves={ this.props.board.moves } /> );
 
         return (
           <div>
