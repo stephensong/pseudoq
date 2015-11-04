@@ -157,7 +157,7 @@ function applyMoves(brd, moves) {
 
 
 let newBoard = function(brd) {
-    let {dim,cells,vals,links,size} = brd;
+    let {dim,cells,vals,links,size,minMoves} = brd;
     if (cells) {
         let newcells = {};
         vals = {};
@@ -175,15 +175,17 @@ let newBoard = function(brd) {
         size = map.length;
         links = initLinks(dim)
         cells = {};
-        map.forEach( (c,i) => { cells[i+1] = {id: i+1, val: 0, hex: c, given: false, fills: {} }; });
+        minMoves = size;
+        map.forEach( (c,i) => { cells[i+1] = {id: i+1, val: 0, hex: c, given: false, active: true, fills: {} }; });
         Object.keys(vals).forEach(function (v) {
             let i = vals[v];
             //console.log(i.toString()+", "+v);
             cells[i].given = true;
             cells[i].val = v;
+            minMoves--;
         });
     }
-    return setMaxMin({...brd, vals, size, cells, links });
+    return setMaxMin({...brd, vals, size, minMoves, cells, links });
 };
 
 function hidato_draw(brd, side, completed) {
@@ -688,7 +690,7 @@ export let Hidato = React.createClass({
 
     render() {
         let board = this.props;
-        let {direction,insertVal,moves, mode} = board;
+        let {dayName, direction,insertVal,moves, mode, cells} = board;
         if (!direction) return null;
 
         let completed = isCompleted(board);
@@ -713,6 +715,7 @@ export let Hidato = React.createClass({
         let h1 = null;
 
         let rhcol = null;
+        let succ = 'Success';
         if (mode === 'view') {
             let {dayName, pos} = this.props;
             let rt = "/" + dayName + "/" + pos;
@@ -724,12 +727,13 @@ export let Hidato = React.createClass({
         } else {
             h1 =  ( <h1>Play</h1> )
             let btns = [];
-            btns.push( <Button key='tryagain' bsSize='small' onClick={this.newGame} block >New Game</Button>);
+            if (dayName === 'hidato') btns.push( <Button key='tryagain' bsSize='small' onClick={this.newGame} block >New Game</Button>);
             btns.push( <Button key='undo' bsSize='small' onClick={this.undo} block >Undo</Button> );
             btns.push( <Button key='check' bsSize='small' onClick={ this.check } block >Check</Button>);
             btns.push( <Button key='reset' bsSize='small' onClick={ this.reset } block >Reset</Button>);
             let l = moves.length;
             let mvcnt = l === 0 ? 0 : moves[l - 1].moveCount;
+            if (completed && board.minMoves && mvcnt === board.minMoves ) succ = 'Perfect Game';
 
             let prog = ( 
                     <Flex row style={ {borderStyle: 'solid', borderWidth: 1 } } >
@@ -769,7 +773,7 @@ export let Hidato = React.createClass({
                 (
                 <div style={{width: board.width }}>
                     <Flex row style={ { justifyContent: 'center' } }>
-                        <div style={ {textAlign: 'center', borderStyle: 'solid', borderWidth: 1, width: '200', fontSize: 30, backgroundColor: 'green' } }>** Success **</div>
+                        <div style={ {textAlign: 'center', borderStyle: 'solid', borderWidth: 1, width: '250', fontSize: 30, backgroundColor: 'green' } }>** { succ } **</div>
                     </Flex>
                 </div> 
                 ):
@@ -806,8 +810,6 @@ export let Hidato = React.createClass({
                   <p>Clicking on a previously filled cell will blank the cell.
                   </p>
                   <p>In a perfect game, the number of moves will be precisely the number of blank cells.
-                  </p>
-                  <p>Progress is not currently saved, or uploaded as per the sudoku puzzles.  This will be rectified in the next release.
                   </p>
                   <h3>Solving Strategies</h3>
                   <p>Every game has a unique solution. In theory, it is never necessary to guess.  
