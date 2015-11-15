@@ -694,9 +694,9 @@ export let Hidato = React.createClass({
         if (!direction) return null;
 
         let completed = isCompleted(board);
-        console.log("rendering Hidato");
+        //console.log("rendering Hidato");
         board = {...board, ...renderBoard(board, (mode === 'view' ? 20 : 30) ) };
-        console.log("renderBoard returned");
+        //console.log("renderBoard returned");
 
         let btnStyle = {
             width: '100%',
@@ -811,15 +811,24 @@ export let Hidato = React.createClass({
                   </p>
                   <p>In a perfect game, the number of moves will be precisely the number of blank cells.
                   </p>
+                  <p>Solutions are currenty displayed as per the sudoku games, but are not (yet) viewable.
+                  </p>
                   <h3>Solving Strategies</h3>
-                  <p>Every game has a unique solution. In theory, it is never necessary to guess.  
+                  <p>Every game has a unique solution. In theory, it is never necessary to guess.  In practice, it may be more enjoyable
+                  to do so.  Currently, the game allows you to reverse your entries, making it somewhat different to the sudoku games where
+                  recursive Undo is your only option.  This may well change in the future.
                   </p>
                   <p>First find cells that must be a particular value.  Then find sequences of cells/values that create no 
-                  inaccessible areas. This is more easily achieved by starting at the edges and working from the outside in.
+                  &apos;holes&apos; i.e. inaccessible areas. In general, start at the edges and work from the outside in.  
+                  If you can find a sequence of
+                  cell fills that are all against the current edge (i.e. filled cells or boundaries) leaving no holes, then it is 
+                  highly likely to be correct.  (In fact, it is usually certain to be correct.  I am unsure if it 
+                  must <strong>always</strong> be so.)
                   </p>
                   <p>One consequence of there being a unique solution is that if placing a sequence of two numbers 
-                      in two cells would mean that swapping them over would also be equally valid, you can then be sure that those two 
-                      numbers do *not* occupy those two cells.  This happens often, and is a very useful strategy.
+                      in two cells would mean that reversing the sequence would also be equally valid, you can then be sure that those two 
+                      numbers do *not* occupy those two cells. This happens often, and is a very useful strategy.
+                      Similar arguments apply for longer sequences, but these do not seem to occur as often.
                   </p>
                   <p>
                   </p>

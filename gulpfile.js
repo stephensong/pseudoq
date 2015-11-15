@@ -6,7 +6,7 @@ var manifest = require('gulp-manifest');
 
 gulp.task("release", function() {
 
-    gulp.src(['package.json','server.js','oxidate.js','timespan.js','pgsql.js', 'auth.js', 'jwt.js','utils.js','uuid.js'])
+    gulp.src(['server.js','oxidate.js','timespan.js','pgsql.js', 'auth.js', 'jwt.js','utils.js','uuid.js'])
         .pipe(gulp.dest('/media/sf_psq-site'));
 
     var cfg = gencfg("./index.js", "./pseudoq_bndl.js");

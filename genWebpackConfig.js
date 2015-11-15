@@ -13,12 +13,13 @@ var configurator = function (entry,output) {
                 ,path: __dirname 
                 },
         module: {
-            loaders: [   {test: /\.css$/, loader: "style!css" }
+            loaders: [   {test: /\.css$/, loader: "style!css-loader" }
                         ,{ test: /\.woff$/, loader: "url-loader" }
                         ,{ test: /\.ttf$/, loader: "url-loader" }
                         ,{ test: /\.svg$/, loader: "url-loader" }
                         ,{ test: /\.eot$/, loader: "url-loader" }
                         ,{ test: /\.png$/, loader: "url-loader" }
+                        ,{ test: /\.json$/, loader: 'json-loader' }
                         ,{ test: require.resolve("react"), loader: "expose?React" }     
                         ,{ test: /\.js$/, exclude: /node_modules/, loader: 'babel', query: {stage: 0} }  
                         ,{ test: /\.jsx$/, loader: 'babel', query: {stage: 0} }  

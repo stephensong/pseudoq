@@ -17,6 +17,8 @@ const ReactDOM = require('react-dom')
 const ReactBootStrap = require('react-bootstrap');
 const Flex = require('flex.jsx');
 
+const Tag = require('./tag.jsx');
+
 const { Button, Input } = ReactBootStrap;
 
 const Remarkable = require('remarkable');
@@ -194,7 +196,7 @@ let LinkEntry = React.createClass({
             let h = null;
             let edits = null;
             let expBtn = ( <Button bsSize='small' style={{width: 30, margin: 5}} block onClick={ () => dispatch({type: link.expanded ? UNEXPAND : EXPAND, link})}>{link.expanded ? '-' : '+'}</Button> );
-            let tagbtns = link.tags.map(t => { return (<Button key={'tag:'+t} bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={ () => { this.addTag(t); }} >{t}</Button> ); } );
+            let tagbtns = link.tags.map(t => { return (<Tag key={'tag:'+t} onClick={ () => { this.addTag(t); }} >{t}</Tag> ); } );
             if (link.expanded) {
                 let lstedit = link.lastedit ? oxiDate.toFormat(link.lastedit, 'DDDD, MMMM D @ HH:MIP') : '';
                 let pub = link.published ? oxiDate.toFormat(link.published, 'DDDD, MMMM D @ HH:MIP') : '';
@@ -204,7 +206,7 @@ let LinkEntry = React.createClass({
                                <Button key='del' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.destroy} block >Delete</Button> 
 	                        </Flex> );
                 }
-            	h = (<Flex row>
+            	h = (<Flex row key={ link.id + "_exp"}>
                       <Flex column style={{width: '100%'}} >
             	       <Flex row style={{width: '100%'}} dangerouslySetInnerHTML={{__html: md.render(link.notes)}} /> 
 	                   <Flex row style={{width: '100%', justifyContent: 'space-between' }}>
@@ -221,10 +223,10 @@ let LinkEntry = React.createClass({
             if (url.substring(0,4).toLowerCase() !== 'http') url = 'http://' + url
             return (
               <div>
-                <Flex row key={ link.id } style={{alignItems: 'center'}} >
-                    <Flex col style={{flex: '0 0 auto'}}>{ expBtn }</Flex> 
-                    <Flex col style={{flex: '5 1 auto'}}><a href={ url } >{ url }</a></Flex>
-                    <Flex col style={{flex: '0 0 auto'}}>{ tagbtns }</Flex>
+                <Flex row key={ link.id } style={{justifyContent: 'flex-start', alignItems: 'center'}} >
+                    <div>{ expBtn }</div> 
+                    <a href={ url } target="_blank">{ url }</a>
+                    <div>{ tagbtns }</div>
                 </Flex>
                 {h}
               </div>  );
@@ -260,7 +262,7 @@ let _links = React.createClass({
 
         let fltr = null
         if (tags.length > 0) {
-            let fltrtags = this.props.tags.map(t => { return (<Button key={'fltr:'+t} bsSize='small' onClick={ () => { this.dropTag(t); }} style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} >{t}</Button> ); });
+            let fltrtags = this.props.tags.map(t => { return (<Tag key={'fltr:'+t} bsStyle='info' onClick={ () => { this.dropTag(t); }} >{t}</Tag> ); });
             fltr = ( <Flex row><span>Showing entries tagged :  { fltrtags }</span></Flex> );
         }
 

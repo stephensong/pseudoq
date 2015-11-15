@@ -23,6 +23,8 @@ const md = new Remarkable({html: true});
 
 const { Button, Input } = ReactBootStrap;
 
+const Tag = require('./tag.jsx');
+
 import { connect } from 'react-redux';
 
 export function blankPost() {
@@ -90,9 +92,10 @@ export function blogReducer(state = initState, action) {
             return {...state, tags };
 
         case UPDATE:
-            let posts = state.posts
-            var i = posts.findIndex(p => p.id === action.post.id);
-            let newposts = i >= 0 ? posts.map(p => p.id === i ? action.post : p)
+            let posts = state.posts;
+            let id = action.post.id;
+            var i = posts.findIndex(p => p.id === id);
+            let newposts = i >= 0 ? posts.map(p => p.id === id ? action.post : p)
                                  : [action.post, ...posts];
             return {...state, currentPost: action.post, posts: newposts, editing: false};
 
@@ -116,7 +119,7 @@ let BlogPost = React.createClass({
             if (rslt.ok) {
                 let {id, lastedit, published} = rslt.results;     
                 let newpost = {...post, id, lastedit: oxiDate.parseUTC(lastedit), published: oxiDate.parseUTC(published)};
-                this.props.dispatch({type: LOAD, post: newpost});
+                this.props.dispatch({type: UPDATE, post: newpost});
             }
         };
         xhr.send(JSON.stringify(post));
@@ -127,27 +130,6 @@ let BlogPost = React.createClass({
     editNew() { this.props.dispatch({type: EDITNEW}) },
     addTag(tag) { this.props.dispatch({type: ADDTAG, tag}) }, 
 
-/* maybe later
-    toggleTag(tag) { 
-        let qry = '/blog';
-        let tags = this.props.tags.slice(0);
-        let i2 = tags.findIndex(t => t === tag);
-        if (i2 >= 0) tags.splice(i2,1);
-        else tags.push(tag);
-
-        if (tags.length === 0) qry += '/latest';
-        else tags.forEach(t => qry += '?tag='+t);
-        let xhr = new XMLHttpRequest();   
-        xhr.open("GET", qry);
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = () => { 
-            let posts = JSON.parse(xhr.responseText);   
-            posts = posts.map(p => { return {...p, lastedit: oxiDate.parseUTC(p.lastedit), published: oxiDate.parseUTC(p.published) } } );
-            this.props.dispatch({type: LOAD, posts, tags});
-        };
-        xhr.send();
-    },
-*/
     render() {
         let post = this.props.post; 
         if (!post) return null;
@@ -170,7 +152,7 @@ let BlogPost = React.createClass({
             let lstedit = post.lastedit ? oxiDate.toFormat(post.lastedit, "DDDD, MMMM D @ HH:MIP") : '';
             let pub = post.published ? oxiDate.toFormat(post.published, "DDDD, MMMM D @ HH:MIP") : '';
             let edits = null;
-            let tagbtns = post.tags.map(t => { return (<Button key={'tag:'+t} bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={ () => { this.addTag(t); }} >{t}</Button> ); } );
+            let tagbtns = post.tags.map(t => { return (<Tag key={'tag:'+t} onClick={ () => { this.addTag(t); }} >{t}</Tag> ); } );
             let userName = localStorage.getItem('pseudoq.userName');
             if (process.env.NODE_ENV !== 'production' || isMember('author')) {
                 edits = ( <Flex row style={{justifyContent: 'flex-start', alignItems: 'stretch', height: 30}}>
@@ -212,6 +194,7 @@ let _blog = React.createClass({
         };
         xhr.send();
     },
+
     dropTag(tag) { this.props.dispatch({type: DROPTAG, tag}) },
 
     render() {
@@ -230,7 +213,7 @@ let _blog = React.createClass({
         }
         let fltr = null
         if (tags.length > 0) {
-            let fltrtags = tags.map(t => { return (<Button key={'fltr:'+t} bsSize='small' onClick={ () => { this.dropTag(t); }} style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} >{t}</Button> ); });
+            let fltrtags = tags.map(t => { return (<Tag key={'fltr:'+t} bsStyle='info' onClick={ () => { this.dropTag(t); }} >{t}</Tag> ); });
             fltr = ( <Flex row><span>Showing posts tagged :  { fltrtags }</span></Flex> );
         }
 

@@ -204,7 +204,7 @@ const _app = React.createClass({displayName: 'App',
             <div onDoubleClick={this.handleDoubleClick} >
               <div className="navbar navbar-default" width='100%'>
                 <div className="navbar-header">
-                  <Link className="navbar-brand" to="/">PseudoQ</Link>
+                  <div className="navbar-brand"><a href='/'>PseudoQ</a></div>
                 </div>
                 <div className="navbar-collapse collapse navbar-responsive-collapse">
                   <ul className="nav navbar-nav navbar-right">
@@ -515,20 +515,18 @@ var _daily = React.createClass({displayName: 'Daily',
         let rslt = [];
         let dt = oxiDate.parseUTC(date, 'yyyyMMdd');
         let cdt = oxiDate.toFormat(dt, "DDDD, MMMM D");
-        var pos = 0;
 
-        Object.keys(boards).forEach(  j => {
-            let p = pos;
-            if (p.toString() != j.toString()) console.log("Something else farked");
-            let brd = boards[j];
-            let pzl = dayName + "/" + p;
-            if (brd.gameType === 'Hidato') {
-                rslt.push( <Hidato       key={ pzl+':view' } dayName={ dayName } pos={ p } dispatch={ dispatch } {...brd} mode='view' /> );
+        Object.keys(boards).forEach( pos => {
+            let brd = boards[pos];
+            if (brd) {
+                let pzl = dayName + "/" + pos;
+                if (brd.gameType === 'Hidato') {
+                    rslt.push( <Hidato       key={ pzl+':view' } dayName={ dayName } pos={ pos } dispatch={ dispatch } {...brd} mode='view' /> );
+                }
+                else {
+                    rslt.push( <PseudoqBoard key={ pzl+':view' } dayName={ dayName } pos={ pos } dispatch={ dispatch } {...brd} mode='view'  /> );
+                }
             }
-            else {
-                rslt.push( <PseudoqBoard key={ pzl+':view' } dayName={ dayName } pos={ p } dispatch={ dispatch } {...brd} mode='view'  /> );
-            }
-            pos++;
         });
 
         return ( 
@@ -552,6 +550,7 @@ var _playPage = React.createClass({
     render() {
         //console.log('rendering PlayPage');
         const {dayName, pos, board, dispatch} = this.props;
+        if (!board) return null;
         const puzzle = dayName + "/" + pos;
         let mode = board.mode || 'play';
         if (mode === 'view') mode = 'play';

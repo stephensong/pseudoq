@@ -156,6 +156,7 @@ function getLocalStorage(props) {
     if (mvs) {
         mvs = JSON.parse(mvs);
         if (mvs.pubID !== pubID) mvs = null;
+        else mvs = mvs.moves;
     }
     let a = mvs && mvs.length > 0 ? mvs[mvs.length - 1].moveCount : -1; 
     let b = bmvs && bmvs.length > 0 ? bmvs[bmvs.length - 1].moveCount : -1; 
@@ -1388,7 +1389,7 @@ export let PseudoqBoard = React.createClass({
     },
 
     render() {
-        console.log("rendering board"); 
+        //console.log("rendering board"); 
         let board = {...this.props};
         let {dayName, pos, mode, model, pickers, selectedCells, layoutNo, pickerPanelPos} = board;
         if (!model || mode === 'hide') return null;
@@ -1466,10 +1467,9 @@ export let PseudoqBoard = React.createClass({
 
         let th1 =  <h2>{ mode.indexOf('review') < 0 ? "Play" : "Review"}</h2>;
 
-        let h1txt = this.props.timeOut ? 'Try to get as many points as you can before your time runs out. Go!'
-                                       : '"It\'s Sudoku, Jim, but who gives a fuck." - anon.';
+        let h1txt = '"Success consists of going from failure to failure without loss of enthusiasm."  -- Winston Churchill';
 
-        let h1 = ( <Flex row style={{justifyContent: 'space-between', width: dim}}>
+        let h1 = ( <Flex row style={{justifyContent: 'space-between', width: '100%'}}>
                     <span>{ th1 }</span>
                     <span>{ h1txt }</span>
                  </Flex> );
