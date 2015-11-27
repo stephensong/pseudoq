@@ -305,11 +305,10 @@ app.use(router.get('/challenges/:id', function *(cid) {
     } );
 }));
 
-app.use(router.get('/puzzles', function *() { 
+app.use(router.get('/puzzles/:cdt', function *(cdt) { 
     
-    let dt = oxiDate.today()
-    let cdt = oxiDate.toFormatUTC(dt , 'YYYYMMDD');
     console.log("/puzzles called for : " + cdt);
+    let dt = oxiDate.parse(cdt,'yyyyMMdd');
     let userId = this.userId.id;
     this.body = yield getWeeklyUser(dt,userId).then(function (brds) { 
         //console.log(brds);

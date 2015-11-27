@@ -64,7 +64,7 @@ const finalCreateStore =  applyMiddleware(thunkMiddleware
                   //,loggerMiddleware
                   )(createStore); 
 
-var today = oxiDate.toUTC(new Date());
+var today = new Date();
 
 const initialState = {
     today,

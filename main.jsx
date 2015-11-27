@@ -31,7 +31,8 @@ import { hidatoReducer, Hidato } from 'Hidato.jsx';
 
 const LOADCONTENTS = 'main/LOADCONTENTS';
 
-const today = oxiDate.toUTC(new Date());
+//const today = oxiDate.toUTC(new Date());
+const today = new Date();
 const firstDay = oxiDate.toFormat(today, 'DDDD');
 
 function loadContents( current, o ) {
@@ -129,8 +130,10 @@ function fetchContents() {
 
     return function (dispatch) {
         if (fetchDone) return;
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", '/puzzles');
+        let xhr = new XMLHttpRequest();
+        let cdt = oxiDate.toFormat(today, 'yyyyMMdd');
+
+        xhr.open("GET", '/puzzles/'+cdt);
         xhr.onload = () => {
             localStorage.setItem('pseudoq.userName', xhr.getResponseHeader('X-psq-moniker'));
             let prov = xhr.getResponseHeader('X-psq-authprov')
@@ -512,8 +515,9 @@ var _daily = React.createClass({displayName: 'Daily',
     render() {
         let {dayName, date, boards, dispatch} = this.props;
         if (dayName !== this.props.params.dayName) console.log("Something farked");
+        if (!boards) return null;
         let rslt = [];
-        let dt = oxiDate.parseUTC(date, 'yyyyMMdd');
+        let dt = oxiDate.parse(date, 'yyyyMMdd');
         let cdt = oxiDate.toFormat(dt, "DDDD, MMMM D");
 
         Object.keys(boards).forEach( pos => {

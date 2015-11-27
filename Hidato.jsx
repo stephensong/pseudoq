@@ -634,7 +634,7 @@ export let Hidato = React.createClass({
 
     componentDidMount () {
         let {mode} = this.props;
-        if (mode === 'play' && !isCompleted(this.props) ) {
+        if (mode === 'play' ) {
             this.setState({reSubmitTimer: window.setInterval(this.tick, 60000)});   // only submit a max of once a minute, upon next move.
         }
     },
