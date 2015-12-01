@@ -408,6 +408,16 @@ app.use(router.post('/newMoniker', function *() {
 
 }));
 
+app.use(router.get('/userstats', function *() {
+    console.log("getting stats for user " + JSON.stringify(this.user));
+    let id = this.userId.id;
+    let rslt =   pg.get_user_stats(id).then( rows => {
+        return {ok: true, rows}
+    }); 
+    this.body = yield rslt;
+
+}));
+
 app.use(router.get('/logout', function *() {
     let auth = this.userId.auth;
     //console.log("auth : "+auth);

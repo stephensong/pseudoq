@@ -8,7 +8,6 @@ require('bootstrap');
 
 
 const oxiDate = require('./oxidate.js');
-const { isMember } = require('./utils.js');
 const grph = require('graphics');
 
 const React = require('react');
@@ -31,14 +30,11 @@ import { hidatoReducer, Hidato } from 'Hidato.jsx';
 
 const LOADCONTENTS = 'main/LOADCONTENTS';
 
-//const today = oxiDate.toUTC(new Date());
-const today = new Date();
-const firstDay = oxiDate.toFormat(today, 'DDDD');
 
 function loadContents( current, o ) {
     console.log('loadContents called');
     let brds = o.boards;
-    let dt = today;
+    let dt = current.today;
     let days = {...current};
     let diff = false;
 
@@ -84,11 +80,12 @@ function loadContents( current, o ) {
     return diff ? days : current;
 };
 
-function initDays() {
+export function initDays(dt) {
     console.log("initDays called");
-    let dt = today;
+    const today = dt;
     var o = Object.create(null);
-    o.date =  oxiDate.toFormat(dt, 'YYYYMMDD');
+    o.date =  oxiDate.toFormat(dt, 'yyyyMMdd');
+    o.today = dt;
 
     var i = 7;
     while (i > 0) {
@@ -125,7 +122,7 @@ function initDays() {
 
 // should get called exactly once for each mount of the app
 let fetchDone = false
-function fetchContents() {
+export function fetchContents(today) {
     console.log("fetchcontents called");
 
     return function (dispatch) {
@@ -160,7 +157,7 @@ function fetchContents() {
 };
 
 export function daysReducer(st, action) {
-    if (!st) return initDays(today);
+    if (!st) throw new Error("initDays not called");  //.return initDays(today);
 
     let typ = action.type;
     if (typ === LOADCONTENTS) {
@@ -184,150 +181,6 @@ export function daysReducer(st, action) {
 
     return st;
 }
-
-const _app = React.createClass({displayName: 'App',
-
-    handleDoubleClick: function(e) {
-        e.preventDefault;
-    },
-
-    componentDidMount: function() { 
-        this.props.dispatch(fetchContents());
-    },
-
-    render: function () {
-        let userName = localStorage.getItem('pseudoq.userName');
-        let prov = localStorage.getItem('pseudoq.authprov')
-        let lis = prov ? (<Link to='/logout'>Sign Out ({prov})</Link>)
-                       : (<Link to='/login'>Sign In</Link>) ;
-
-        let lis2 = (isMember('member')) ? [ <li key='blog' ><Link to="/blog">Blog</Link></li>, <li key='links' ><Link to="/links">Links</Link></li> ]
-                                           : [];
-        return (
-            <div onDoubleClick={this.handleDoubleClick} >
-              <div className="navbar navbar-default" width='100%'>
-                <div className="navbar-header">
-                  <div className="navbar-brand"><a href='/'>PseudoQ</a></div>
-                </div>
-                <div className="navbar-collapse collapse navbar-responsive-collapse">
-                  <ul className="nav navbar-nav navbar-right">
-                      <li><Link to="/help">How to Play</Link></li>
-                      <li><Link to="/about">About</Link></li>
-                      { lis2 }
-                      <li><a href="mailto:stephensong2@gmail.com">Contact Us</a></li>
-                      <li>{ lis }</li>
-                      <li><Link to='/changeMoniker' >User : { userName } </Link></li>
-                  </ul>
-                </div>
-              </div>
-              {this.props.children}
-            </div>
-        );
-    }
-});
-
-export let App = connect(state => state )(_app);
-
-export let ChangeMoniker = React.createClass({
-    mixins: [ History ],
-
-    getInitialState: function() {
-        return {
-            response: {ok: true},
-            moniker: localStorage.getItem('pseudoq.userName')
-        };
-    },
-
-    changeMoniker: function() {
-        this.setState({moniker: this.refs.moniker.getValue()});
-    },
-
-    saveMoniker: function() {
-        let newName = this.state.moniker;
-        //console.log("saving moniker : "+newName);
-
-        let xhr = new XMLHttpRequest();   
-        xhr.open("POST", "/newMoniker");
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-        xhr.onload = () => {
-            let rsptxt = xhr.responseText;
-            console.log("response received : "+rsptxt);           
-            if(xhr.status !== 200) { 
-                let msg = 'failed : ' + xhr.status + " - " + rsptxt;
-                alert(msg);
-            } else {
-                let rsp = JSON.parse(rsptxt);
-                if (rsp.ok) {
-                    localStorage.setItem('pseudoq.userName', newName);
-                    this.history.goBack();
-                }
-                else this.setState({response: rsp}); 
-            }
-        };
-        xhr.send(JSON.stringify({userName: newName}));
-
-    },
-
-    render: function() {
-        let xtra = this.state.response.ok ? <div/> : ( <div className="row">The moniker you requested is already taken.  You may wish to try another.</div> );
-        return (
-            <div>
-              <div className="row">
-                 <p>Enter new moniker, then press Save</p> 
-              </div>
-              <div className="row">
-                <div className="col-md-4">
-                  <Input type="textarea" ref="moniker" value={ this.state.moniker } onChange={this.changeMoniker} />   
-                </div>
-                <Button onClick={this.saveMoniker} >Save</Button>
-              </div>
-              { xtra }
-            </div>               
-        )
-    }
-});
-
-export let Login = React.createClass({displayName: 'Login',
-    render: function () {
-        return (
-            <div>
-      <ul>
-        <li><a href="/auth/facebook">Sign in via Facebook</a></li>
-        <li><a href="/auth/twitter">Sign in via Twitter</a></li> 
-      </ul> 
-      <p/>       
-      <h3>Security Policy</h3>
-      <p>This site refuses to ask you for a password.  This means we don&apos;t have to store, encrypt or otherwise
-      concern ourselves with any of your personal data.  Currently, the <strong>only</strong> thing we store about you
-      is your moniker, along with games in progress, solutions submitted etc.</p>
-      <p>In order to still reliably identify you, allowing e.g. for games in progress to be accessed across multiple devices, we
-      ask that you identify yourself using a "social login", currently either Facebook or Twitter.  Essentially, this means that we rely on you
-      identifying yourself to a third party, who then vouches for your identity to us.  If you would prefer to use another social
-      login provider (Google, LinkedIn, Pinterest, ...) please email your request, and we will endeavour to accomodate you.  
-      </p>
-           </div>
-      );
-        //<li><a href="/auth/google">Sign in via Google</a></li>
-    }
-});
-
-export let Logout = React.createClass({displayName: 'Logout',
-    mixins: [History],
-
-    componentDidMount: function() {
-        var xhr = new XMLHttpRequest();
-        console.log("logout requested");
-        xhr.open("GET", '/logout');
-        xhr.onload = () => {
-            localStorage.removeItem('pseudoq.authprov');
-            this.history.goBack();
-        };
-        xhr.send();
-    },
-
-    render: function () { return null; },
-});
 
 var _help = React.createClass({displayName: 'Help',
 
@@ -355,21 +208,22 @@ let _challenge5min = React.createClass({displayName: 'Challenge5min',
             let json = JSON.parse(xhr.responseText);
             console.log("challenge5min puzzle received");
             json = grph.Transformer(json).randomTransform();
-            this.dispatch({type: 'psq/LOAD', props: json});
+            this.props.dispatch({type: 'psq/LOAD', props: json, dayName: 'challenge5', pos: 0 });
         };
         xhr.send();
     },
 
-    render: function () { 
-        if (!this.props.allRegions) return null;
+    render: function () {
+        let {board, dispatch} = this.props; 
+        if (!board.allRegions) return null;
         console.log("rendering challenge5");
 
-        return ( <PseudoqBoard key={ 'challenge5:play' } dayName={ 'challenge5' } pos={ 0 }  dispatch={this.dispatch} newGame={ this.newGame } {...this.props } mode={ 'play' } random={ true } timeOut={ 300 } /> );
+        return ( <PseudoqBoard key={ 'challenge5:play' } dayName={ 'challenge5' } pos={ 0 } dispatch={ dispatch } newGame={ this.newGame } {...board} mode={ 'play' } random={ true } timeOut={ 300 } /> );
     },
 
 });
 
-export let Challenge5min = connect((state,props) => {
+export let Challenge5min = connect(state => {
     return {board: state.days.challenge5.boards[0] };
 })(_challenge5min);
 
@@ -388,21 +242,22 @@ let _challenge15min = React.createClass({displayName: 'Challenge15min',
             let json = JSON.parse(xhr.responseText);
             console.log("challenge15min puzzle received");
             json = grph.Transformer(json).randomTransform();
-            this.dispatch({type: 'psq/LOAD', props: json});
+            this.props.dispatch({type: 'psq/LOAD', props: json, dayName: 'challenge15', pos: 0 });
         };
         xhr.send();
     },
 
     render: function () { 
-        if (!this.props.allRegions) return null;
-        console.log("rendering challenge5");
+        let {board, dispatch} = this.props; 
+        if (!board.allRegions) return null;
+        console.log("rendering challenge15");
 
-        return ( <PseudoqBoard key={ 'challenge15:play' } dayName={ 'challenge15' } pos={ 0 }  dispatch={this.dispatch} newGame={ this.newGame } {...this.props } mode={ 'play' } random={ true } timeOut={ 300 } /> );
+        return ( <PseudoqBoard key={ 'challenge15:play' } dayName={ 'challenge15' } pos={ 0 }  dispatch={ dispatch } newGame={ this.newGame } {...board } mode={ 'play' } random={ true } timeOut={ 300 } /> );
     },
 
 });
 
-export let Challenge15min = connect((state,props) => {
+export let Challenge15min = connect(state => {
     return {board: state.days.challenge15.boards[0] };
 })(_challenge15min);
 
@@ -424,15 +279,14 @@ var _fp = React.createClass({displayName: 'FP',
 
     componentWillMount: function() { 
         console.log("mounting FP");
-        //this.props.dispatch(fetchContents());
         this.initComponent(this.props); 
     },
 
     componentWillReceiveProps: function(nextProps) { this.initComponent(nextProps); }, 
     initComponent: function(props) {  
-        var { dayName } = props.params;
-        //console.log("day :" + dayName);
+        const { dayName } = props.params;
         if (!dayName || dayName === '_#_') {
+            const firstDay = oxiDate.toFormat(props.date, 'DDDD');
             this.history.pushState(null, "/" + firstDay);
         }
     },

@@ -289,6 +289,56 @@ export function get_random_hidato() {
     return get_puzzle(pzl);
 };
 
+export function get_all_user_stats() {
+    let csql = '\
+        with stats as ( \
+          select "gameType", "user",AVG("moveCount") as avgmoves ,count(*) as gamescompleted \
+          from solutions s \
+          join users u on s."user" = u."userId" \
+          join puzzles p on p."puzzleId" = s.puzzle \
+          where s.completed \
+          group by "user","gameType" \
+        ) \
+        select "gameType", user",avgmoves,gamescompleted, u."userName"  \
+        from stats s  \
+        join users u on s."user" = u."userId" '
+    return query(csql);
+}
+
+export function get_gameType_stats() {
+    let csql = '\
+      select "gameType", AVG("moveCount") as avgmoves ,count(*) as gamescompleted \
+      from solutions s \
+      join puzzles p on p."puzzleId" = s.puzzle \
+      where s.completed \
+      group by "gameType" '
+    return query(csql);
+}
+
+export function get_user_stats(uid) {
+    let csql = '\
+        with gamestats as ( \
+          select "gameType", round( AVG("moveCount") ) as avgmoves_all, count(*) as gamescompleted_all \
+          from solutions s \
+          join puzzles p on p."puzzleId" = s.puzzle \
+          where s.completed \
+          group by "gameType" \
+        ), userstats as ( \
+          select "gameType", round( AVG("moveCount") ) as avgmoves ,count(*) as gamescompleted \
+          from solutions s \
+          join puzzles p on p."puzzleId" = s.puzzle \
+          where s.completed and "user" = $1 \
+          group by "gameType" \
+        ) \
+        select g."gameType",avgmoves,gamescompleted,avgmoves_all,gamescompleted_all  \
+        from userstats u \
+        join gamestats g on u."gameType" = g."gameType" \
+        '
+    return query(csql,[uid]);
+}
+
+
+
 //console.log = function(msg) { console.trace(msg) }
 
 //rslt.import_new_puzzles();

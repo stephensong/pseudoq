@@ -31,22 +31,24 @@ import { compose, createStore, applyMiddleware } from 'redux';
 
 const {
     daysReducer,
-    App,
     About,
     Help,
-    Login,
-    Logout,
     Daily,
     PlayPage,
     FP,
-    ChangeMoniker,
     HidatoApp,
     Challenge5min,
-    Challenge15min
+    Challenge15min,
+    initDays
 } = main;
 
-let { blogReducer, Blog, BlogPost, BlogEntry} = require('./blog.jsx');
-let { linksReducer, Links} = require('./links.jsx');
+import { UserDetails, Login, Logout, userReducer, initUser } from 'user.jsx';
+
+import _app from 'App.jsx';
+export let App = connect(state => state )(_app);
+
+const { blogReducer, Blog, BlogPost, BlogEntry} = require('./blog.jsx');
+const { linksReducer, Links} = require('./links.jsx');
 
 const history = createHashHistory({queryKey: false});
 
@@ -60,17 +62,20 @@ const enhCreateStore = compose(
 )(createStore);
 */
 
+const User = connect(state => state.user )(UserDetails);
+
 const finalCreateStore =  applyMiddleware(thunkMiddleware 
                   //,loggerMiddleware
                   )(createStore); 
 
-var today = new Date();
+const today = new Date();
 
 const initialState = {
     today,
-    days: undefined,     // keyed by dayName/pos
+    days: initDays(today),     // keyed by dayName/pos
     blog: undefined,
-    links: undefined
+    links: undefined,
+    user: initUser(),
 };
 
 
@@ -78,7 +83,8 @@ function reducer(state = initialState, action) {
     let days = daysReducer(state.days, action);
     let blog = blogReducer(state.blog, action);
     let links = linksReducer(state.links, action);
-    let rslt = {...state, days, blog, links  };
+    let user = userReducer(state.user, action);
+    let rslt = {...state, days, blog, links, user  };
     return rslt;
 }
 
@@ -92,7 +98,7 @@ function renderRoutes (history) {
         <Route path="/about" component={About}/>
         <Route path="/login" component={Login} />
         <Route path="/logout" component={Logout} />
-        <Route path="/changeMoniker" component={ChangeMoniker}/>
+        <Route path="/user" component={User}/>
         <Route path="/challenge5" component={Challenge5min} />
         <Route path="/challenge15" component={Challenge15min} />
         <Route path="/blog/:id" component={BlogEntry} />

@@ -5,29 +5,29 @@ window.jQuery = require('jquery');
 require('./css/bootstrap-flatly.css');
 require('./css/psq.css');
 require('bootstrap');
-let oxiDate = require('./oxidate.js');
-let utils = require('./utils.js');
+const oxiDate = require('./oxidate.js');
+const utils = require('./utils.js');
 
-let timeSpan = require('timeSpan');
+const timeSpan = require('timeSpan');
 
-let grph = require('graphics');
-let React = require('react');
-let ReactDOM = require('react-dom')
-let ReactBootStrap = require('react-bootstrap');
+const grph = require('graphics');
+const React = require('react');
+const ReactDOM = require('react-dom')
+const ReactBootStrap = require('react-bootstrap');
 
 const { Button, ButtonToolbar, ButtonGroup, Input, Modal } = ReactBootStrap;
 
-let {LinkContainer} = require('react-router-bootstrap');
-let SolutionsTable = require('SolutionsTable.jsx');
-let ChallengesTable = require('challengesTable.jsx');
-let PickerPanels = require('pickers.js');
-let HorizontalPickerPanel = PickerPanels.Horizontal;
-let VerticalPickerPanel = PickerPanels.Vertical;
-let ColwisePickerPanel = PickerPanels.Colwise;
-let RowwisePickerPanel = PickerPanels.Rowwise;
-let tinycolor = require('tinycolor2');
-let Flex = require('flex.jsx');
-let renderedBoards = {};
+const {LinkContainer} = require('react-router-bootstrap');
+const SolutionsTable = require('SolutionsTable.jsx');
+const ChallengesTable = require('challengesTable.jsx');
+const PickerPanels = require('pickers.js');
+const HorizontalPickerPanel = PickerPanels.Horizontal;
+const VerticalPickerPanel = PickerPanels.Vertical;
+const ColwisePickerPanel = PickerPanels.Colwise;
+const RowwisePickerPanel = PickerPanels.Rowwise;
+const tinycolor = require('tinycolor2');
+const Flex = require('flex.jsx');
+const renderedBoards = {};
 
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
@@ -141,11 +141,21 @@ let initState = {
     reSubmit: false,
     completed: false,
     pickerPanelPos: 'top',
-    unitsize: 54,
     layoutNo: 1,
     timer: null,
-    colorTag: 'Transparent'
+    colorTag: 'Transparent',
+    unitsize: -1
 };
+
+function getUnitSize(board) {
+    if (board.mode === 'view') return 36; 
+    let sz = board.cols.length;
+    let u = localStorage.getItem('pseudoq.settings.' + sz);
+    if (u) u = parseInt(u);
+    if (u) return u;
+    return sz === 21 ? 45 : 54;
+}
+
 
 function getLocalStorage(props) {
     console.log("getLocalStorage called");
@@ -343,8 +353,6 @@ function loadComponent(st, props) {
 
     regs = initRegions(cols,rows)
     Object.keys(brd.regions).forEach(r => regs.push(r.split(":")) );
-    let svd = localStorage.getItem('pseudoq.settings.' + sz );
-    if (svd) brd.unitsize = parseInt(svd);
     let svdauto = localStorage.getItem('pseudoq.settings.autoEliminate');
     if (svdauto) autoEliminate = (svdauto === 'true');
     let svdlno = localStorage.getItem('pseudoq.settings.layoutNo')
@@ -1339,11 +1347,13 @@ export let PseudoqBoard = React.createClass({
     },
 
     enlarge() {
-        this.setUnitSize(this.props.unitsize + 9);
+        let unitsize = getUnitSize(this.props);
+        this.setUnitSize(unitsize + 9);
     },
 
     shrink() {
-        this.setUnitSize(this.props.unitsize - 9);
+        let unitsize = getUnitSize(this.props);
+        this.setUnitSize(unitsize - 9);
     },
 
     componentWillMount() {  
@@ -1390,16 +1400,13 @@ export let PseudoqBoard = React.createClass({
 
     render() {
         //console.log("rendering board"); 
+        const that = this;
         let board = {...this.props};
         let {dayName, pos, mode, model, pickers, selectedCells, layoutNo, pickerPanelPos} = board;
         if (!model || mode === 'hide') return null;
 
         let sz = board.cols.length;
-        let unitsize = 
-            mode === 'view' ? 36 
-            : sz === 9 ? 54 
-            : 45;
-
+        let unitsize = getUnitSize(board);
         board.unitsize = unitsize;
         let completed = !mode.startsWith('review') && isCompleted(model, board);
 
@@ -1719,41 +1726,41 @@ export let PseudoqBoard = React.createClass({
             //console.log("picker panel :" + ppos);
             pkrpanels.push( ppos === 'top' ? (
                 <div key='top' style={{ position: 'absolute', top: unitsize, left: (9*unitsize)+2, width: (3*unitsize) - 1, height: (5*unitsize) - 1 }}>
-                    <ColwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
+                    <ColwisePickerPanel parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} />
                 </div> ) 
             : (
                 <div key='topblank' onClick={ function () {that.setPickerPanelPos('top');} } style={{ position: 'absolute', top: 0, left: (9*unitsize)+1, width: (3*unitsize) - 1, height: (6*unitsize) - 1 }} />
             ));
             pkrpanels.push( ppos === 'left' ? (
                 <div key='left' style={{ position: 'absolute', left: unitsize, top: (9*unitsize), width: (5*unitsize) - 1, height: (3*unitsize) - 2 }}>
-                    <RowwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
+                    <RowwisePickerPanel parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} />
                 </div> )
             : (
                 <div key='leftblank' onClick={ function () {that.setPickerPanelPos('left');} } style={{ position: 'absolute', left: 0, top: (9*unitsize)+1, height: (3*unitsize) - 1, width: (6*unitsize) - 1 }} />
             ));
             pkrpanels.push( ppos === 'bottom' ? (
                 <div key='bottom' style={{ position: 'absolute', top: (unitsize * 15), left: (9*unitsize)+2, width: (3*unitsize) - 1, height: (5*unitsize) - 1 }}>
-                    <ColwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
+                    <ColwisePickerPanel parent={ board} avail={ avail } pickers={pickers} />
                 </div> )
             : (
                 <div key='bottomblank' onClick={ function () {that.setPickerPanelPos('bottom');} } style={{ position: 'absolute', top: (unitsize * 15), left: (9*unitsize)+1, width: (3*unitsize) - 1, height: (6*unitsize) - 1 }} />
             ));
             pkrpanels.push( ppos === 'right' ? (
                 <div key='right' style={{ position: 'absolute', left: (unitsize * 15), top: (9*unitsize), width: (5*unitsize) - 1, height: (3*unitsize) - 2 }}>
-                    <RowwisePickerPanel parent={ this } avail={ avail } pickers={pickers} />
+                    <RowwisePickerPanel parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} />
                 </div> )
             : (
                 <div key='rightblank' onClick={ function () {that.setPickerPanelPos('right');} } style={{ position: 'absolute', left: (unitsize * 15) , top: (9*unitsize)+1, width: (6*unitsize) - 1, height: (3*unitsize) - 1 }} />
             ));
         } else {
             let pnl = layoutNo === 1 ? ( <Flex column style={{alignItems: 'center'}}>
-                                                <RowwisePickerPanel key='rowwise' parent={ this } avail={ avail } pickers={pickers} />
+                                                <RowwisePickerPanel key='rowwise' parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} />
                                                </Flex> )
                         :  layoutNo === 2 ? ( <Flex column style={{alignItems: 'center'}}>
-                                                 <HorizontalPickerPanel key='horizontal' parent={ this } avail={ avail } pickers={pickers} />
+                                                 <HorizontalPickerPanel key='horizontal' parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} />
                                                </Flex> )
-                        :  layoutNo === 3 ? <div style={{margin: 'auto'}}><ColwisePickerPanel key='colwise' parent={ this } avail={ avail } pickers={pickers} /></div>
-                        :  layoutNo === 4 ? <VerticalPickerPanel key='vertical' parent={ this } avail={ avail } pickers={pickers} />
+                        :  layoutNo === 3 ? <div style={{margin: 'auto'}}><ColwisePickerPanel key='colwise' parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} /></div>
+                        :  layoutNo === 4 ? <VerticalPickerPanel key='vertical' parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} />
                         : null;
             if (layoutNo === 1 || layoutNo === 2 ) hpnl = <div style={{width: dim}}>{ pnl } </div>;
             else if (layoutNo === 4 || layoutNo === 3) {
@@ -1799,7 +1806,7 @@ export let PseudoqBoard = React.createClass({
         let midcol = (
               <div>
                 {h2}
-                <Flex row style={{width: dim}}>
+                <Flex row style={{width: dim, position: 'relative'}}>
                     <div className="brd" style={divStyle} >
                       {cells}
                     </div>
