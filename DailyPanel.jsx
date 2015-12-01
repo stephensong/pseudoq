@@ -1,38 +1,43 @@
 "use strict";
 
-var React = require('react');
-var Board = require('PseudoqBoard.jsx');
-var Utils = require('utils');
+const React = require('react');
+const oxiDate = require('./oxidate.js');
 
-var DailyPanel = React.createClass({
+import {PseudoqBoard} from 'PseudoqBoard.jsx';
+import { Hidato } from 'Hidato.jsx';
 
-    getInitialState: function() {
-        return {
-        };
-    },
+const Daily = React.createClass({displayName: 'Daily',
 
-    render: function() {
-        console.log("rendering daily panel");
-        var rslt = [];
-        var brds = this.props.boards;
-        var dt = Utils.str2Date(this.props.date);
-        var cdt = dt.toFormat("DDDD, MMMM D");
-        for (var j in brds) {
-            if (brds.hasOwnProperty(j)) {
-                console.log("board : " + j);
-                var js = brds[j];
-                rslt.push( <Board key={ j } puzzleId={ j } brdJson={ js } initmode='view'  /> );
+    render() {
+        let {dayName, date, boards, dispatch} = this.props;
+        if (dayName !== this.props.params.dayName) console.log("Something farked");
+        if (!boards) return null;
+        let rslt = [];
+        let dt = oxiDate.parse(date, 'yyyyMMdd');
+        let cdt = oxiDate.toFormat(dt, "DDDD, MMMM D");
+
+        Object.keys(boards).forEach( pos => {
+            let brd = boards[pos];
+            if (brd) {
+                let pzl = dayName + "/" + pos;
+                if (brd.gameType === 'Hidato') {
+                    rslt.push( <Hidato       key={ pzl+':view' } dayName={ dayName } pos={ pos } dispatch={ dispatch } {...brd} mode='view' /> );
+                }
+                else {
+                    rslt.push( <PseudoqBoard key={ pzl+':view' } dayName={ dayName } pos={ pos } dispatch={ dispatch } {...brd} mode='view'  /> );
+                }
             }
-        }
+        });
 
         return ( 
           <div>
-            <h2>Puzzles for { cdt }</h2>
-            <div>{rslt}</div>
+            <h2>Puzzles for  { cdt } </h2>
+            <div>{ rslt }</div>
           </div>
         );
-    }
+
+    }    
 });
 
-module.exports = DailyPanel;
+export default Daily;
 
