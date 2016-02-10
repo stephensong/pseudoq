@@ -26,6 +26,7 @@ import { hidatoReducer, Hidato } from 'Hidato.jsx';
 
 import DailyPanel from 'DailyPanel.jsx';
 import FrontPage from 'FrontPage.jsx';
+import {storeAuthHeaders} from 'user.jsx';
 
 const LOADCONTENTS = 'main/LOADCONTENTS';
 
@@ -131,15 +132,8 @@ export function fetchContents(today) {
 
         xhr.open("GET", '/puzzles/'+cdt);
         xhr.onload = () => {
-            localStorage.setItem('pseudoq.userName', xhr.getResponseHeader('X-psq-moniker'));
-            let prov = xhr.getResponseHeader('X-psq-authprov')
-            if (prov)  localStorage.setItem('pseudoq.authprov', prov);
-            else localStorage.removeItem('pseudoq.authprov');
-
-            let grps = xhr.getResponseHeader('X-psq-groups') || '';
-            grps = grps.replace('}',',');
-            localStorage.setItem('pseudoq.groups', grps);
-
+            storeAuthHeaders(xhr);
+            dispatch({type: 'user/LOAD'});
             if (xhr.status == 200) {
                 try { 
                     let t = JSON.parse(xhr.responseText);

@@ -53,16 +53,18 @@ const FrontPage = React.createClass({displayName: 'FP',
 
         items.push( <LinkContainer key="hidato" to="/hidato"><NavItem>Hidato</NavItem></LinkContainer> );
 
+        items.push( <LinkContainer key="multi" to="/multi"><NavItem>Multi-Player</NavItem></LinkContainer> );
+
         let prov = localStorage.getItem('pseudoq.authprov') ? null : (
-                       <p>You are not currently signed in to psuedoq.net.  This means that your games in progress will not
-                       be made available on other devices, and any solutions you submit will not appear on leaderboards.  
-                       You can sign-in either by <a href="/auth/facebook">Facebook</a> or <a href="/auth/twitter">Twitter</a> 
+                       <p>You are not currently signed in to PseudoQ.net. This only means that your games in progress can not
+                       be made available on other devices.  
+                       You can sign-in from <LinkContainer key="loginlink" to="/login"><a>here</a></LinkContainer> 
                        </p>
                        );
 
-        let anon = userName && userName.substring(0,10) !== 'anonymous_' ? null : (
+        let anon = userName && userName.substring(0, 9) !== 'anonymous' ? null : (
                       <p>You are currently using an automatically assigned user-name (aka moniker).  
-                       This only means that any solutions you submit will not be readily recognisable on leaderboards as having come from you.
+                       This only means that you will not be able to submit your solutions for display on the leaderboards.
                        You can change your moniker <LinkContainer key="monikerlink" to="/changeMoniker"><a>here</a></LinkContainer>  
                        </p>
                        );
@@ -73,7 +75,7 @@ const FrontPage = React.createClass({displayName: 'FP',
               <div>
                 <div className="row">
                   <div className="col-md-12">
-                      <p>Welcome to PseudoQ.net.  Here we publish puzzles (mainly murderous Sudoku variants) that are playable online.
+                      <p>Welcome to PseudoQ.net. Here we publish puzzles (mainly murderous Sudoku variants) that are playable online.
                       </p>
                       {anon}
                       {prov}

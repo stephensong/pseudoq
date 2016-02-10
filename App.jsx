@@ -12,6 +12,38 @@ import { fetchContents } from './main.jsx';
 
 const { isMember } = require('./utils.js');
 
+function cacheStatus() {
+    var sCacheStatus = "Not supported";
+    if (window.applicationCache) 
+    {
+        var oAppCache = window.applicationCache;
+        switch ( oAppCache.status ) {
+        case oAppCache.UNCACHED : 
+           sCacheStatus = "Not cached"; 
+           break;
+        case oAppCache.IDLE : 
+           sCacheStatus = "Idle"; 
+           break;
+        case oAppCache.CHECKING : 
+           sCacheStatus = "Checking"; 
+           break;
+        case oAppCache.DOWNLOADING : 
+           sCacheStatus = "Downloading"; 
+           break;
+        case oAppCache.UPDATEREADY : 
+           sCacheStatus = "Update ready"; 
+           break;
+        case oAppCache.OBSOLETE : 
+           sCacheStatus = "Obsolete"; 
+           break;
+        default : 
+          sCacheStatus = "Unexpected Status ( " + 
+                         oAppCache.status.toString() + ")";
+          break;
+        }
+    }
+    return sCacheStatus;
+}
 
 const _app = React.createClass({displayName: 'App',
 
@@ -21,10 +53,27 @@ const _app = React.createClass({displayName: 'App',
 
     componentDidMount() { 
         this.props.dispatch(fetchContents(this.props.today));
+        let cachestat = cacheStatus(); 
+        console.log("cache : "+cachestat);
+        if (cachestat !== 'Idle' && cachestat !== 'Not cached' && cachestat !== 'Not supported') {
+            var oCache = window.applicationCache;
+            oCache.addEventListener("updateready", (e) => { 
+                console.log('cache updated'); 
+                oCache.swapCache();
+                this.props.dispatch({type: 'FORCEREFRESH'}) 
+            }, true);
+        }
     },
 
     render() {
+        console.log("app render");
+        let cachestat = cacheStatus(); 
+        if (cachestat !== 'Idle' && cachestat !== 'Not cached') {
+            console.log("Waiting for cache : current status is : " + cachestat);
+            //return null;
+        }
         let userName = this.props.user.moniker; //localStorage.getItem('pseudoq.userName');
+        if (userName !== localStorage.getItem('pseudoq.userName')) console.log("userName farked : ");
         let prov = localStorage.getItem('pseudoq.authprov')
         let lis = prov ? (<Link to='/logout'>Sign Out ({prov})</Link>)
                        : (<Link to='/login'>Sign In</Link>) ;

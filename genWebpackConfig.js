@@ -1,57 +1,72 @@
-
+"use strict";
 
 var webpack = require('webpack');
 var path = require('path');
+const fs = require('fs');
 
-var configurator = function (entry,output) {
+var configurator = function (entry,output,ldr,brw) {  
     console.log("entry " + entry);
     console.log("output " + output);
+    if (Array.isArray(entry)) entry.unshift('babel-polyfill');
+    else entry = ['babel-polyfill', entry];
+     
     var config = {
-        entry: entry,
+        entry,
         cache: true,
-        output: {filename: output
-                ,path: __dirname 
-                },
+        output: {
+            filename: output,
+            path: __dirname 
+        },
         module: {
-            loaders: [   {test: /\.css$/, loader: "style!css-loader" }
+            loaders: [   { test: /\.css$/, loader: "style!css-loader" }
                         ,{ test: /\.woff$/, loader: "url-loader" }
                         ,{ test: /\.ttf$/, loader: "url-loader" }
                         ,{ test: /\.svg$/, loader: "url-loader" }
                         ,{ test: /\.eot$/, loader: "url-loader" }
                         ,{ test: /\.png$/, loader: "url-loader" }
                         ,{ test: /\.json$/, loader: 'json-loader' }
-                        ,{ test: require.resolve("react"), loader: "expose?React" }     
-                        ,{ test: /\.js$/, exclude: /node_modules/, loader: 'babel', query: {stage: 0} }  
-                        ,{ test: /\.jsx$/, loader: 'babel', query: {stage: 0} }  
-                        //,{ test: /\.jsx$/, loader: 'babel-loader?optional=runtime' }   // jsx must be last!!!
+                        /*,{ test: require.resolve("react"), loader: "expose?React" }     */
+                        , ldr
             ]
         },
         resolve: {
-            root: path.resolve(__dirname, '.')
-            ,extensions: ['', '.js', '.jsx']
+            root: path.resolve(__dirname, '.'),
+            extensions: ['', '.js', '.jsx']
         },
-        plugins: [
-            new webpack.optimize.OccurenceOrderPlugin()
-        ],
+        node: {
+            fs: "empty"
+        }
     };
 
-    if(process.env.NODE_ENV === 'production') {
-        console.log("production mode build");
+    if (brw) config.resolve.alias = { debug: path.resolve(__dirname, './node_modules/debug/browser.js' ) };
+    else {
+        var nodeModules = fs.readdirSync('node_modules')
+                            .filter(function(x) {
+                                 return ['.bin'].indexOf(x) === -1;
+                            });
+        config.externals = [
+            function(context, request, callback) {
+                var pathStart = request.split('/')[0];
+                if (nodeModules.indexOf(pathStart) >= 0 && request != 'webpack/hot/signal.js') {
+                    return callback(null, "commonjs " + request);
+                };
+                callback();
+            }
+        ];
+
+        
+        config.target = 'node';
+        config.node = { __dirname: true, __filename: true, process: true };
         config.plugins = [
-            new webpack.DefinePlugin({
-              "process.env": {
-                NODE_ENV: JSON.stringify("production")
-              }
-            }),
-            //new webpack.optimize.DedupePlugin(),
-            new webpack.optimize.UglifyJsPlugin(),
+            new webpack.IgnorePlugin(/\.(css|less)$/),
+            new webpack.BannerPlugin('require("source-map-support").install();', { raw: true, entryOnly: false }),
         ];
     }
-    else {
+    //config.devtool = 'cheap-module-eval-source-map';
+    //config.devtool = 'source-map';
+    config.devtool = 'sourcemap';
+    config.debug = true;
 
-        config.devtool = 'sourcemap';
-        config.debug = true;
-    }
     return config;
 };
 

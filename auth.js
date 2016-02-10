@@ -37,36 +37,55 @@ passport.use(new FacebookStrategy({
     callbackURL: root + 'auth/facebook'
   },
   function(token, tokenSecret, profile, done) {
+    console.log('facebook callback hot called');
     done(null, profile.id);
   }
 ));
 
 if (!isDev) {
 
-var TwitterStrategy = require('passport-twitter').Strategy;
-passport.use(new TwitterStrategy({
-  consumerKey: process.env.TWITTER_ID,
-  consumerSecret: process.env.TWITTER_SECRET,
-  callbackURL: root + 'auth/twitter'
-},
-function(token, tokenSecret, profile, done) {
-  done(null, profile.id);
-}
-));
-
-/*
-  var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
-  passport.use(new GoogleStrategy({
-      clientID: process.env.GOOGLE_ID,
-      clientSecret: process.env.GOOGLE_SECRET,
-      callbackURL: root + 'auth/google'
-    },
-    function(token, tokenSecret, profile, done) {
-      // retrieve user ...
-      done(null, profile.id)
+    let gh_ID = process.env.GITHUB_CLIENT_ID;
+    if (gh_ID) {
+      var GitHubStrategy = require('passport-github').Strategy;
+      passport.use(new GitHubStrategy({
+        clientID: gh_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        callbackURL: root + 'auth/github'
+      },
+      function(accessToken, refreshToken, profile, done) {
+      done(null, profile.id);
+      }
+      ));
     }
-  ))
-*/
+
+    let twKey =  process.env.TWITTER_ID;
+    if (twKey) {
+      var TwitterStrategy = require('passport-twitter').Strategy;
+      passport.use(new TwitterStrategy({
+      consumerKey: twKey,
+      consumerSecret: process.env.TWITTER_SECRET,
+      callbackURL: root + 'auth/twitter'
+      },
+      function(token, tokenSecret, profile, done) {
+      done(null, profile.id);
+      }
+      ));
+    }
+
+    let goog_Id = process.env.GOOGLE_ID;
+    if (goog_Id) {
+      var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+      passport.use(new GoogleStrategy({
+        clientID: goog_Id,
+        clientSecret: process.env.GOOGLE_SECRET,
+        callbackURL: root + 'auth/google'
+      },
+      function(accessToken, refreshToken, profile, done) {
+      done(null, profile.id);
+      }
+      ));
+    }
+
 }
 
 module.exports = passport;

@@ -23,7 +23,7 @@ const md = new Remarkable({html: true});
 
 const { Button, Input } = ReactBootStrap;
 
-const Tag = require('./tag.jsx');
+import Tag from './tag.jsx';
 
 import { connect } from 'react-redux';
 
@@ -137,15 +137,15 @@ let BlogPost = React.createClass({
             let tags = post.tags.join(' ');
             return (
                 <Flex row >
+                  <Flex column style={{justifyContent: 'flex-start', flex: '0 0 100px' }}>
+                    <Button key='save' bsSize='small' onClick={this.save} block >Save</Button> 
+                    <Button key='stop' bsSize='small' onClick={this.stopEdit} block >Cancel</Button> 
+                  </Flex>  
                   <Flex column style={{flex: '1 1 auto',  marginRight: 20 }}>
                         <Input type="text" style={{height: 40, width: '100%'}} ref="title" label='Title' defaultValue={ post.title }  />                  
                         <Input type="textarea" style={{width: '100%', height: 400}} ref="body" label='Body' defaultValue={ post.body } />
                         <Input type="text" style={{height: 40, width: '100%'}} ref="tags" label='Tags' defaultValue={ tags } />
                   </Flex>
-                  <Flex column style={{justifyContent: 'flex-start', flex: '0 0 100px' }}>
-                    <Button key='save' bsSize='small' onClick={this.save} block >Save</Button> 
-                    <Button key='stop' bsSize='small' onClick={this.stopEdit} block >Cancel</Button> 
-                  </Flex>  
                 </Flex> );
         } else {
             let h = {__html: md.render(post.body)};
@@ -162,6 +162,7 @@ let BlogPost = React.createClass({
             }
             return (
                 <div>
+                   { edits }
                     <Flex row style={{justifyContent: 'space-between' }}>
                        <h2>{post.title}</h2>
                        <div>
@@ -175,7 +176,6 @@ let BlogPost = React.createClass({
                       <div>Published: {pub}</div>
                       <div>Last Edit: {lstedit}</div>
                    </Flex>
-                   { edits }
                 </div>   
                  );
         }

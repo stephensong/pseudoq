@@ -5,7 +5,6 @@ const jQuery = require('jquery');
 //require('bootstrap');
 const oxiDate = require('./oxidate.js');
 const utils = require('./utils.js');
-const Objectassign = require('object-assign');
 
 const timeSpan = require('timeSpan');
 

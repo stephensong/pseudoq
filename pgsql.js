@@ -1,19 +1,13 @@
 "use strict";
 
 let url = process.env.DATABASE_URL;
-//let url='postgres://gary:gary@10.1.1.2:5432/postgres';
-let Promise = require('bluebird');
+console.log('url : ' + url);
 let massive = require('massive');
 let oxiDate = require('./oxidate.js');
-//Promise.promisifyAll(massive);
-let fs = require('fs');
-Promise.promisifyAll(fs);
 
 let pg = require('pg');
 
 let deasync = require('deasync');
-
-let util = require('util');
 
 let querySync = function(sql,args) {
     let rslt = null;
@@ -141,6 +135,22 @@ export function insert_auth(prov, authId, userId) {
     });
 };
 
+export function upsert_auth(prov, authId, userId) {
+    //console.log('Upserting auth for prov : ' + prov + ', user : ' + users[userId].userName  ) ;
+    let key = prov + ':' + authId;
+    let auth = {authId: key, userId: userId};
+    return where(db.auths, '"authId"=$1',[key]).then( rslt => {
+        if (rslt.length > 0) {
+            auth.userId = rslt[0].userId;
+            let dt = new Date();
+            return query('update auths set "userId" = $2, updated = $3 where "authId" = $1',[key, userId, dt])
+            //return update(db.auths, auth);  // NB - this doesn't work :()
+        } else {
+            return insert(db.auths, auth);
+        }
+    });
+};
+
 export function get_user_from_auth(prov, authId) {
     let rslt = auths[prov + ':' + authId];
     if (rslt) rslt = users[rslt];
@@ -152,7 +162,7 @@ export function set_user_name(userId, newName) {
     if (!usr) return insert_user(id,newName);
     if (usr.userName === newName) return;
     let dt = new Date();
-    return query('update users set "userName" = $2, updated = $3 where "userId" = $1',[userId,newName,dt]).then(rslt => {
+    return query('update users set "userName" = $2, updated = $3 where "userId" = $1',[userId, newName, dt]).then(rslt => {
         usr.userName = newName;
         usr.updated = dt;
         return usr;
@@ -166,6 +176,12 @@ export function touch_user(userId) {
         usr.updated = dt;
         return usr;
     });
+};
+
+export function touch_auth(prov, authId) {
+    let key = prov + ':' + authId;
+    let dt = new Date();
+    return query('update auths set updated = $2 where "authId" = $1',[key,dt]);
 };
 
 export function upsert_solution(soln) {

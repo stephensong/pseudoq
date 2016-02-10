@@ -26,7 +26,7 @@ var AboutPage = React.createClass({
      functionality to allow guessing to be used, but this is definitely considered cheating, and will be severely frowned upon 
      by self-respecting, upright pseudo-citizens.
   </p>
-<p>
+  <p>
 The main technologies used to create this site are 
     &nbsp;<a href='http://facebook.github.io/react'>React</a>, 
     &nbsp;<a href='http://getbootstrap.com'>Bootstrap</a>, 
@@ -49,6 +49,9 @@ The name &quot;PseudoQ&quot; was of my own invention.  Unfortunately, I very rec
 released around 2005. This was disappointing to say the least.  My apologies if anybody out there takes offence at my hijacking of the name.  
 It can, of course, be changed if needs be.
 </p>
+  <p>Current Version: 1.2.2
+  </p>
+
 <h2>About me</h2>
 <p>
     My name is Gary Stephenson.

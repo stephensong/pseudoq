@@ -1,40 +1,17 @@
-var path = require('path');
-var webpack = require('webpack');
-var WebpackDevServer = require('webpack-dev-server');
-var gencfg = require('./genWebpackConfig');
+'use strict';
 
-var entry = {app: ['webpack-dev-server/client?http://localhost:3000' 
-                  ,'webpack/hot/only-dev-server'
-                  ,'./index.js'
-                  ]};
+'use strict';
 
-var config = gencfg( entry, "./pseudoq_bndl.js");
+//const {hmr, hmr_backend} = require('./hmr.js');
+const {hmr} = require('./hmr.js');
+const app = require('./serverIndex.js');
 
-var ldrs = config.module.loaders;  // should check it tests for jsx!!
-ldrs[ldrs.length -1] = { test: /\.jsx$/
-                       , loaders: ['react-hot', 'babel-loader?experimental'] 
-                       };
+hmr(app);
+//hmr_backend(app);
+ 
+var port = parseInt(process.env.PORT, 10) || 8080;
 
-[
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin()
-].forEach(function (p) { config.plugins.push(p); });
+console.log("Listening at http://localhost:" + port);
+app.listen(port);
 
-config.devtool = 'eval';
-
-console.log(JSON.stringify(config));
-
-new WebpackDevServer(webpack(config), {
-  publicPath: '/',
-  hot: true,
-  historyApiFallback: false,
-  proxy: {
-    "*": 'http://localhost:8080'
-  }
-}).listen(3000, 'localhost', function (err, result) {
-  if (err) {
-    console.log(err);
-  }
-  console.log('Hot Loader listening at localhost:3000');
-});
 

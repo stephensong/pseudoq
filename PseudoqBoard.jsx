@@ -6,7 +6,7 @@ require('./css/bootstrap-flatly.css');
 require('./css/psq.css');
 require('bootstrap');
 const oxiDate = require('./oxidate.js');
-const utils = require('./utils.js');
+import {solutionSorter, isCellActive} from './utils.js';
 
 const timeSpan = require('timeSpan');
 
@@ -28,10 +28,6 @@ const RowwisePickerPanel = PickerPanels.Rowwise;
 const tinycolor = require('tinycolor2');
 const Flex = require('flex.jsx');
 const renderedBoards = {};
-
-import { connect } from 'react-redux';
-import { createSelector } from 'reselect';
-
 
 let vals = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 let defaultAvail = Object.create(null);
@@ -57,19 +53,6 @@ function newModel(cols,rows) {
     return mdl;
 };
 
-const inactives = [
-      "J1", "K1", "L1", "J2", "K2", "L2", "J3", "K3", "L3",
-      "J4", "K4", "L4", "J5", "K5", "L5", "J6", "K6", "L6",
-      "J16", "K16", "L16", "J17", "K17", "L17", "J18", "K18", "L18",
-      "J19", "K19", "L19", "J20", "K20", "L20", "J21", "K21", "L21",
-      "A10", "B10", "C10", "D10", "E10", "F10", "P10", "Q10", "R10", "S10", "T10", "U10",
-      "A11", "B11", "C11", "D11", "E11", "F11", "P11", "Q11", "R11", "S11", "T11", "U11",
-      "A12", "B12", "C12", "D12", "E12", "F12", "P12", "Q12", "R12", "S12", "T12", "U12" ];
-
-function isCellActive(id) {
-    return inactives.indexOf(id) < 0;
-};
-
 function isCompleted(mdl, board) {
     let soln = board.solution;
     return board.cols.every( c => {
@@ -82,7 +65,7 @@ function isCompleted(mdl, board) {
     });
 };
 
-function createModel(prnt) {
+export function createModel(prnt) {
     let mdl = Object.create(prnt);
     mdl.comment = '';
     mdl.moveCount = prnt.moveCount + 1;
@@ -174,8 +157,7 @@ function getLocalStorage(props) {
     return mvs;
 }
 
-function applyMoveToModel(orgmdl,m) {
-    let mdl = createModel(orgmdl);
+function applyMoveToModel(mdl,m) {
     Object.keys(m).forEach( function(cid) {
         if (cid !== 'moveCount' && cid != 'comment' && cid != 'user' && mdl[cid]) {
             let oks = m[cid];
@@ -197,9 +179,37 @@ function applyMoveToModel(orgmdl,m) {
     return mdl;
 };
 
+function completionPoints(mdl, board) {
+    let soln = board.solution;
+    let score = 0;
+    let tot = 0;
+    board.cols.forEach( (c) => {
+        board.rows.forEach( (r) => {
+            let id = c+r;
+            if (isCellActive(id)) {  
+                let ps = mdl[id];
+                let chk = soln[id];
+                tot += 8;
+                if ( typeof ps !== 'object' ) {
+                     if (ps === chk) score += 8;
+                } else {
+                    let ok = true;
+                    let tscore = 0
+                    vals.forEach( (i) => { 
+                        if (i === chk && !ps[i]) ok = false;
+                        else if (!ps[i]) tscore += 1; 
+                    });
+                    if (ok) score += tscore; 
+                } 
+            } 
+        });
+    });
+    return {points: score, total: tot};
+}
+
 function applyMovesToModel(org, mvs) {
     let mdl = org;   
-    mvs.forEach( m => { mdl = applyMoveToModel(mdl,m); });
+    mvs.forEach( m => { mdl = applyMoveToModel( createModel(mdl), m); });
     return mdl;
 };
 
@@ -424,7 +434,7 @@ export function psqReducer(state = initState, action) {
 }
 
 
-let CheckModal = React.createClass({
+const CheckModal = React.createClass({
 
     getInitialState() {
         return { showModal: false };
@@ -482,7 +492,7 @@ let CheckModal = React.createClass({
 
 });
 
-let RestartModal = React.createClass({
+const RestartModal = React.createClass({
   getInitialState() {
     return { showModal: false };
   },
@@ -523,7 +533,7 @@ let RestartModal = React.createClass({
   }
 });
 
-let Poss = React.createClass({
+const Poss = React.createClass({
     handleRightClick(e) {
         if (this.props.mode === 'play') {
             this.props.setCellValue(this.props.val);
@@ -555,7 +565,7 @@ let Poss = React.createClass({
 
 });
 
-let Cell = React.createClass({
+const Cell = React.createClass({
 
     handleClick() {
         let mode = this.props.board.mode;
@@ -654,7 +664,7 @@ let Cell = React.createClass({
 
 });
 
-let Timer = React.createClass({
+const Timer = React.createClass({
 
     getInitialState(){
         return { timer: null, elapsed: 0};
@@ -680,7 +690,7 @@ let Timer = React.createClass({
     }
 });
 
-let Progress = React.createClass({
+const Progress = React.createClass({
 
     getInitialState(){
         return { ticker: null, elapsed: 0};
@@ -730,7 +740,7 @@ let Progress = React.createClass({
 });
 
 
-export let PseudoqBoard = React.createClass({ 
+export const PseudoqBoard = React.createClass({ 
 
     getInitialState() {
         return {
@@ -819,32 +829,7 @@ export let PseudoqBoard = React.createClass({
     completionPoints(mdl) {
         mdl = mdl || this.props.model;
         let board = this.props
-        let soln = board.solution;
-        let score = 0;
-        let tot = 0;
-        board.cols.forEach( (c) => {
-            board.rows.forEach( (r) => {
-                let id = c+r;
-                if (isCellActive(id)) {  
-                    let ps = mdl[id];
-                    let chk = soln[id];
-                    tot += 8;
-                    if ( typeof ps !== 'object' ) {
-                         if (ps === chk) score += 8;
-                    } else {
-                        let ok = true;
-                        let tscore = 0
-                        vals.forEach( (i) => { 
-                            if (i === chk && !ps[i]) ok = false;
-                            else if (!ps[i]) tscore += 1; 
-                        });
-                        if (ok) score += tscore; 
-                    } 
-                } 
-            });
-        });
-        return {points: score, total: tot};
-
+        return completionPoints(mdl,board);
     },
 
     percentCompleted(mdl) {
@@ -1261,7 +1246,7 @@ export let PseudoqBoard = React.createClass({
                     let rslts = rsp.results ;
                     this.postState({solutions: rslts});  // lazy kludge?
                 } else {
-                    let solns = rsp.solutions.sort(utils.solutionSorter);
+                    let solns = rsp.solutions.sort(solutionSorter);
                     //console.log("solutions received : "+solns.length);
                     //solns.forEach(function (s) {console.log(s.lastPlay);});
                     //localStorage.setItem('pseudoq.solutions.' + dayName + '.' + pos, JSON.stringify(solns));

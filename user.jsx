@@ -10,21 +10,57 @@ const React = require('react');
 const ReactBootStrap = require('react-bootstrap');
 const { Button, Input, Table } = ReactBootStrap;
 import { History, Link } from 'react-router';
+import { connect } from 'react-redux';
+
 const Flex = require('flex.jsx');
 
 
+export function getMoniker() {
+    return localStorage.getItem('pseudoq.userName');
+}
+
+export function loadUser() {
+    let cgrps = localStorage.getItem('pseudoq.groups');
+    let groups = cgrps ? cgrps.split(',') : [];
+    return {
+        moniker: localStorage.getItem('pseudoq.userName') || '',
+        groups,
+        prov: localStorage.getItem('pseudoq.authprov') || ''
+    };
+}
+
 export function initUser() {
     return {
-        moniker: localStorage.getItem('pseudoq.userName'),
+        moniker: getMoniker(),
+        groups: [],
+        prov: '',
         stats: undefined
     };
 }
 
-const NEWMONIKER = 'user/NEWMONIKER'
-const INITSTATS = 'user/INITSTATS'
 
+export function storeAuthHeaders(xhr) {
+    console.log("loading Auth headers");
+    localStorage.setItem('pseudoq.userName', xhr.getResponseHeader('X-psq-moniker'));
+    let prov = xhr.getResponseHeader('X-psq-authprov')
+    if (prov)  localStorage.setItem('pseudoq.authprov', prov);
+    else localStorage.removeItem('pseudoq.authprov');
+
+    let grps = xhr.getResponseHeader('X-psq-groups') || '';
+    grps = grps.replace('}',',');
+    localStorage.setItem('pseudoq.groups', grps);
+}
+
+const LOADUSER = 'user/LOAD';
+const NEWMONIKER = 'user/NEWMONIKER';
+const INITSTATS = 'user/INITSTATS';
+ 
 export function userReducer(state, action) {
     switch (action.type) {
+        case LOADUSER:
+            let usr = loadUser();
+            return {...state, ...usr};
+
         case INITSTATS:
             return {...state, stats: action.stats};
 
@@ -88,31 +124,39 @@ const UserStats = React.createClass({displayName: 'UserStats',
 
 })
 
-export const Login = React.createClass({displayName: 'Login',
+const _Login = React.createClass({displayName: 'Login',
+
     render() {
         return (
-            <div>
+            <div>Sign in via:
       <ul>
-        <li><a href="/auth/facebook">Sign in via Facebook</a></li>
-        <li><a href="/auth/twitter">Sign in via Twitter</a></li> 
+        <li><a href="/auth/facebook" >Facebook</a></li>
+        <li><a href="/auth/twitter" >Twitter</a></li> 
+        <li><a href="/auth/github">GitHub</a></li>
+        <li><a href="/auth/google">Google</a></li>
       </ul> 
       <p/>       
       <h3>Security Policy</h3>
-      <p>This site refuses to ask you for a password.  This means we don&apos;t have to store, encrypt or otherwise
-      concern ourselves with any of your personal data.  Currently, the <strong>only</strong> thing we store about you
+      <p>This site refuses to ask you for a password, or any other identifying information - other than your moniker.  
+      You do not have to choose a moniker, but if you choose to remain &apos;anonymous&apos; your completed games will not
+      be eligible for inclusion in leaderboards.  Nor will the system provide 
+      </p>
+      <p> We do not store, encrypt or otherwise concern ourselves with any of your personal data.  
+      The <strong>only</strong> thing we store about you
       is your moniker, along with games in progress, solutions submitted etc.</p>
       <p>In order to still reliably identify you, allowing e.g. for games in progress to be accessed across multiple devices, we
-      ask that you identify yourself using a "social login", currently either Facebook or Twitter.  Essentially, this means that we rely on you
+      ask that you identify yourself using any of the above "social login"s.  Essentially, this means that we rely on you
       identifying yourself to a third party, who then vouches for your identity to us.  If you would prefer to use another social
-      login provider (Google, LinkedIn, Pinterest, ...) please email your request, and we will endeavour to accomodate you.  
+      login provider (LinkedIn, Pinterest, ...) please email your request, and we will endeavour to accomodate you.  
       </p>
            </div>
       );
-        //<li><a href="/auth/google">Sign in via Google</a></li>
     }
 });
 
-export const Logout = React.createClass({displayName: 'Logout',
+export const Login = connect(state => state )(_Login);
+
+const _Logout = React.createClass({displayName: 'Logout',
     mixins: [History],
 
     componentDidMount() {
@@ -120,8 +164,10 @@ export const Logout = React.createClass({displayName: 'Logout',
         console.log("logout requested");
         xhr.open("GET", '/logout');
         xhr.onload = () => {
-            localStorage.removeItem('pseudoq.authprov');
+            storeAuthHeaders(xhr);
             this.history.goBack();
+            this.props.dispatch("FORCEREFRESH");
+
         };
         xhr.send();
     },
@@ -129,6 +175,7 @@ export const Logout = React.createClass({displayName: 'Logout',
     render() { return null; },
 });
 
+export const Logout = connect(state => state )(_Logout);
 
 const ChangeMoniker = React.createClass({
 
@@ -175,7 +222,8 @@ const ChangeMoniker = React.createClass({
         let xtra = this.state.response.ok ? null : ( <div className="row">The moniker you requested is already taken.  Please try another.</div> );
         return (
             <div>
-              <p>You can change your moniker, by editing below, then pressing Save.</p>
+              <p>You can change your moniker, by editing below, then pressing Save.  The system requires that monikers have not been used before, either 
+              by yourself or anyone else.</p>
               <Flex row style={{ justifyContent: 'flex-start' }} >
                   <Input type="text" ref="moniker" value={ this.state.newMoniker } onChange={this.changeMoniker} style={{width: 300, height: 30 }} />   
                   <Button bsSize='small' onClick={this.saveMoniker} style={{ height: 30 }} >Save</Button>
@@ -186,7 +234,7 @@ const ChangeMoniker = React.createClass({
     }
 });
 
-export const UserDetails = React.createClass({
+const UserDetails = React.createClass({
     render() {
         const {dispatch, stats, moniker} = this.props;
         return (
@@ -197,4 +245,6 @@ export const UserDetails = React.createClass({
             );
     }
 });
+
+export const User = connect(state => state.user )(UserDetails);
 

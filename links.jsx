@@ -17,7 +17,7 @@ const ReactDOM = require('react-dom')
 const ReactBootStrap = require('react-bootstrap');
 const Flex = require('flex.jsx');
 
-const Tag = require('./tag.jsx');
+import Tag from './tag.jsx';
 
 const { Button, Input } = ReactBootStrap;
 

@@ -3,11 +3,12 @@
 require('./css/bootstrap-flatly.css');
 require('./css/psq.css');
 require('bootstrap');
+
 let utils = require('./utils.js');
 
 let timeSpan = require('timeSpan');
 
-let jQuery = require('jquery');
+//let jQuery = require('jquery');
 let grph = require('graphics');
 let React = require('react');
 let ReactBootStrap = require('react-bootstrap');

@@ -25,7 +25,7 @@ import createHashHistory from 'history/lib/createHashHistory';
 
 import thunkMiddleware from 'redux-thunk';
 import createLogger from 'redux-logger';
-import { compose, createStore, applyMiddleware } from 'redux';
+import { compose, createStore, applyMiddleware, combineReducers } from 'redux';
 
 //import { devTools, persistState } from 'redux-devtools';
 
@@ -42,13 +42,14 @@ const {
     initDays
 } = main;
 
-import { UserDetails, Login, Logout, userReducer, initUser } from 'user.jsx';
+import { User, Login, Logout, userReducer, initUser } from 'user.jsx';
 
 import _app from 'App.jsx';
 export let App = connect(state => state )(_app);
 
-const { blogReducer, Blog, BlogPost, BlogEntry} = require('./blog.jsx');
-const { linksReducer, Links} = require('./links.jsx');
+import { blogReducer, Blog, BlogEntry} from 'blog.jsx';
+import { linksReducer, Links} from 'links.jsx';
+import { multiPlayReducer, MultiPlayerGame} from 'gameclient.jsx';
 
 const history = createHashHistory({queryKey: false});
 
@@ -62,7 +63,16 @@ const enhCreateStore = compose(
 )(createStore);
 */
 
-const User = connect(state => state.user )(UserDetails);
+const _refresh = React.createClass({displayName: 'Refresh',
+
+    componentDidMount() {
+        history.go(-2);
+        this.props.dispatch({type: 'user/LOAD'});
+    },
+    render() { return null; },
+});
+
+const Refresh = connect(state => state)(_refresh);
 
 const finalCreateStore =  applyMiddleware(thunkMiddleware 
                   //,loggerMiddleware
@@ -76,15 +86,30 @@ const initialState = {
     blog: undefined,
     links: undefined,
     user: initUser(),
+    multi: undefined,
+    seq: 0,
 };
 
+/*
+let combReducer = combineReducers({
+        days: daysReducer, 
+        blog: blogReducer, 
+        links: linksReducer, 
+        user: userReducer, 
+        multi: multiPlayReducer
+    });
+*/
 
 function reducer(state = initialState, action) {
     let days = daysReducer(state.days, action);
     let blog = blogReducer(state.blog, action);
     let links = linksReducer(state.links, action);
     let user = userReducer(state.user, action);
-    let rslt = {...state, days, blog, links, user  };
+    let multi = multiPlayReducer(state.multi, action);
+    //if (days === state.days && blog === state.blog && links === state.links && user === state.user && multi === state.multi) return state;
+    let seq = state.seq;
+    if (action === 'FORCEREFRESH') seq = seq + 1;
+    let rslt = {...state, days, blog, links, user, multi, seq };
     return rslt;
 }
 
@@ -99,6 +124,7 @@ function renderRoutes (history) {
         <Route path="/login" component={Login} />
         <Route path="/logout" component={Logout} />
         <Route path="/user" component={User}/>
+        <Route path="/multi" component={MultiPlayerGame} />
         <Route path="/challenge5" component={Challenge5min} />
         <Route path="/challenge15" component={Challenge15min} />
         <Route path="/blog/:id" component={BlogEntry} />
@@ -106,6 +132,9 @@ function renderRoutes (history) {
         <Route path="/links" component={Links} />
         <Route path="/hidato" component={HidatoApp} />
         <Route path="/:dayName/:pos" component={PlayPage}/>
+        <Route path="/refresh" component={Refresh}>
+            <Route path="_=_" component={Refresh} />
+        </Route>
         <Redirect from="/_=_" to="/" />
         <Route path="/" component={FP} >
           <Route path=":dayName" component={Daily}/>
@@ -114,6 +143,8 @@ function renderRoutes (history) {
     </Router>
   );
 }
+
+
 
 function getRootChildren (props) {
        // console.log("getRootChildren called");
@@ -136,20 +167,23 @@ function getRootChildren (props) {
 
 const store = finalCreateStore(reducer, initialState);
 
-@connect(state => state)
-class Root extends React.Component {
-  static propTypes = {
-    history: PropTypes.object.isRequired
-  }
+class _root extends React.Component {
 
   render () {
     //console.log("rendering Root");
     return (
       <div>{getRootChildren(this.props)}</div>
     )
-  }
+  };
+
 }
 
+_root.propTypes = {
+    history: PropTypes.object.isRequired
+  };
+
+
+let Root = connect(state => state)(_root);
 
 
 ReactDOM.render(
