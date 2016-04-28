@@ -269,11 +269,11 @@ let _links = React.createClass({
         return (
             <div>
                 <h2>Links</h2> 
+                <Button key='new' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.editNew} block >New</Button> 
                 {fltr}
                 <p/>
                 {entries}
                 <p/>
-                <Button key='new' bsSize='small' style={{width: 100, height: '100%', marginTop: 0, marginRight: 10}} onClick={this.editNew} block >New</Button> 
             </div>
             );
     }

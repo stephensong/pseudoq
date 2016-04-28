@@ -256,7 +256,7 @@ var _drawer = function(board) {
             g.drawLine(pen, [x, 1], [x, 1 + w]);
         };
 
-        pen = _pen({width: 1.5});
+        pen = _pen({width: 3});
         var bsz2 = bsz / 3;
         for (var n = 0; n <= bsz2 + 1; n++) {
             var x = unitsize * n * 3;

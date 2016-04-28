@@ -5511,7 +5511,7 @@
 	      _react2.default.createElement(_reactRouter.Route, { path: '/multi', component: _gameclient.MultiPlayerGame }),
 	      _react2.default.createElement(_reactRouter.Route, { path: '/challenge5', component: Challenge5min }),
 	      _react2.default.createElement(_reactRouter.Route, { path: '/challenge15', component: Challenge15min }),
-	      _react2.default.createElement(_reactRouter.Route, { path: '/blog/:id', component: _blog.BlogEntry }),
+	      _react2.default.createElement(_reactRouter.Route, { path: '/blogentry/:id', component: _blog.BlogEntry }),
 	      _react2.default.createElement(_reactRouter.Route, { path: '/blog', component: _blog.Blog }),
 	      _react2.default.createElement(_reactRouter.Route, { path: '/links', component: _links.Links }),
 	      _react2.default.createElement(_reactRouter.Route, { path: '/hidato', component: HidatoApp }),
@@ -55485,7 +55485,7 @@
 	    reSubmit: false,
 	    completed: false,
 	    pickerPanelPos: 'top',
-	    layoutNo: 1,
+	    layoutNo: 3,
 	    timer: null,
 	    colorTag: 'Transparent',
 	    unitsize: -1
@@ -55728,7 +55728,7 @@
 	    brd.rows = rows;
 	    var regs = [];
 	    var autoEliminate = true;
-	    var layoutNo = 1;
+	    var layoutNo = 3;
 	
 	    regs = initRegions(cols, rows);
 	    (0, _keys2.default)(brd.regions).forEach(function (r) {
@@ -55806,6 +55806,7 @@
 	        this.setState({ showModal: false });
 	    },
 	    open: function open() {
+	        this.props.opened();
 	        this.setState({ showModal: true });
 	    },
 	    fixErrors: function fixErrors() {
@@ -56758,16 +56759,20 @@
 	            });
 	        });
 	    },
-	    fixErrors: function fixErrors() {
+	    payForCheck: function payForCheck() {
 	        var mdl = this.props.model;
 	        var nmvs = mdl.moveCount + 10;
+	        mdl.moveCount = nmvs;
+	        this.setModelState(mdl);
+	    },
+	    fixErrors: function fixErrors() {
+	        var mdl = this.props.model;
 	        if (this.checkForErrors()) {
 	            while (true) {
 	                mdl = (0, _getPrototypeOf2.default)(mdl);
 	                if (!this.checkForErrors(mdl)) break;
 	            }
 	        }
-	        mdl.moveCount = nmvs;
 	        this.setModelState(mdl);
 	    },
 	    setLocalStorage: function setLocalStorage(mvs) {
@@ -57055,7 +57060,7 @@
 	                    'Undo'
 	                ));
 	                if (!completed) {
-	                    btns.push(React.createElement(CheckModal, { key: 'check', check: this.checkForErrors, fix: this.fixErrors }));
+	                    btns.push(React.createElement(CheckModal, { key: 'check', opened: this.payForCheck, check: this.checkForErrors, fix: this.fixErrors }));
 	                }
 	                btns.push(React.createElement(RestartModal, { key: 'restart', restart: this.restart }));
 	                btns.push(React.createElement(
@@ -58255,7 +58260,7 @@
 	            g.drawLine(pen, [x, 1], [x, 1 + w]);
 	        };
 	
-	        pen = _pen({ width: 1.5 });
+	        pen = _pen({ width: 3 });
 	        var bsz2 = bsz / 3;
 	        for (var n = 0; n <= bsz2 + 1; n++) {
 	            var x = unitsize * n * 3;
@@ -77548,15 +77553,15 @@
 	                null,
 	                'Links'
 	            ),
-	            fltr,
-	            React.createElement('p', null),
-	            entries,
-	            React.createElement('p', null),
 	            React.createElement(
 	                Button,
 	                { key: 'new', bsSize: 'small', style: { width: 100, height: '100%', marginTop: 0, marginRight: 10 }, onClick: this.editNew, block: true },
 	                'New'
-	            )
+	            ),
+	            fltr,
+	            React.createElement('p', null),
+	            entries,
+	            React.createElement('p', null)
 	        );
 	    }
 	});

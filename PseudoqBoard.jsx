@@ -124,7 +124,7 @@ let initState = {
     reSubmit: false,
     completed: false,
     pickerPanelPos: 'top',
-    layoutNo: 1,
+    layoutNo: 3,
     timer: null,
     colorTag: 'Transparent',
     unitsize: -1
@@ -359,7 +359,7 @@ function loadComponent(st, props) {
     brd.rows = rows;
     let regs = [];
     let autoEliminate = true;
-    let layoutNo = 1;
+    let layoutNo = 3;
 
     regs = initRegions(cols,rows)
     Object.keys(brd.regions).forEach(r => regs.push(r.split(":")) );
@@ -445,6 +445,7 @@ const CheckModal = React.createClass({
     },
 
     open() {
+        this.props.opened()
         this.setState({ showModal: true });
     },
 
@@ -1298,16 +1299,21 @@ export const PseudoqBoard = React.createClass({
         });
     },
 
-    fixErrors() {
+    payForCheck() {
         let mdl = this.props.model;
         let nmvs = mdl.moveCount + 10;
+        mdl.moveCount = nmvs;
+        this.setModelState(mdl);
+    },
+
+    fixErrors() {
+        let mdl = this.props.model;
         if (this.checkForErrors()) {
             while (true) {
                 mdl = Object.getPrototypeOf(mdl)
                 if (!this.checkForErrors(mdl)) break;
             }
         }
-        mdl.moveCount = nmvs;
         this.setModelState(mdl);
     },
 
@@ -1526,7 +1532,7 @@ export const PseudoqBoard = React.createClass({
             } else {
                 btns.push( <Button key='undo' bsSize='small' onClick={this.undo} block >Undo</Button> );
                 if (!completed) {
-                    btns.push( <CheckModal key='check' check={this.checkForErrors} fix={this.fixErrors} /> );
+                    btns.push( <CheckModal key='check' opened={this.payForCheck} check={this.checkForErrors} fix={this.fixErrors} /> );
                 }
                 btns.push( <RestartModal key='restart' restart={this.restart} /> );
                 btns.push( <Button key='review' bsSize='small' onClick={this.review} block >Review</Button> );

@@ -127,7 +127,7 @@ function renderRoutes (history) {
         <Route path="/multi" component={MultiPlayerGame} />
         <Route path="/challenge5" component={Challenge5min} />
         <Route path="/challenge15" component={Challenge15min} />
-        <Route path="/blog/:id" component={BlogEntry} />
+        <Route path="/blogentry/:id" component={BlogEntry} />
         <Route path="/blog" component={Blog} />
         <Route path="/links" component={Links} />
         <Route path="/hidato" component={HidatoApp} />
