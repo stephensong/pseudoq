@@ -150,7 +150,7 @@ let getWeekly = function(cdt) {
         dt = oxiDate.addDays(dt, -1);
         --ndays;
     }
-    wk['tutorial'] = getPuzzle(604).then( function (brdjson) {
+    wk['tutorial'] =  fs.readFileAsync("./puzzles/tutorial.psq").then(JSON.parse).then( function (brdjson) {
         let b = "./puzzles/tutorial.moves" ;
         return fs.readFileAsync(b).then(JSON.parse).then( function (mvs) {
             brdjson.moves = mvs;
@@ -175,9 +175,8 @@ let getWeeklyUser = function(dt,uid) {
                 if (!wk[tdt]) wk[tdt] = {};
                 wk[tdt][r.pos] = pzl;
             });
-            return getPuzzle(604).then( function (brdjson) {
-                let b = "./puzzles/tutorial.moves" ;
-                return fs.readFileAsync(b).then(JSON.parse).then( function (doc) {
+            return fs.readFileAsync("./puzzles/tutorial.psq").then(JSON.parse).then( function (brdjson) {
+                return fs.readFileAsync("./puzzles/tutorial.moves").then(JSON.parse).then( function (doc) {
                     brdjson.moves = doc.moves;
                     wk['tutorial'] =  brdjson;
                     return wk;

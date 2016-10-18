@@ -1308,12 +1308,14 @@ export const PseudoqBoard = React.createClass({
 
     fixErrors() {
         let mdl = this.props.model;
+        let nmvs = mdl.moveCount;
         if (this.checkForErrors()) {
             while (true) {
                 mdl = Object.getPrototypeOf(mdl)
                 if (!this.checkForErrors(mdl)) break;
             }
         }
+        mdl.moveCount = nmvs + 10;
         this.setModelState(mdl);
     },
 
@@ -1465,7 +1467,7 @@ export const PseudoqBoard = React.createClass({
 
         let th1 =  <h2>{ mode.indexOf('review') < 0 ? "Play" : "Review"}</h2>;
 
-        let h1txt = '"Success consists of going from failure to failure without loss of enthusiasm."  -- Winston Churchill';
+        let h1txt = '"There are 10 types of people in this world - those who understand binary, and I forget what the other nine are."  --anon';
 
         let h1 = ( <Flex row style={{justifyContent: 'space-between', width: '100%'}}>
                     <span>{ th1 }</span>
@@ -1731,7 +1733,7 @@ export const PseudoqBoard = React.createClass({
             ));
             pkrpanels.push( ppos === 'bottom' ? (
                 <div key='bottom' style={{ position: 'absolute', top: (unitsize * 15), left: (9*unitsize)+2, width: (3*unitsize) - 1, height: (5*unitsize) - 1 }}>
-                    <ColwisePickerPanel parent={ board} avail={ avail } pickers={pickers} />
+                    <ColwisePickerPanel parent={ this } unitsize={ unitsize } avail={ avail } pickers={pickers} />
                 </div> )
             : (
                 <div key='bottomblank' onClick={ function () {that.setPickerPanelPos('bottom');} } style={{ position: 'absolute', top: (unitsize * 15), left: (9*unitsize)+1, width: (3*unitsize) - 1, height: (6*unitsize) - 1 }} />
